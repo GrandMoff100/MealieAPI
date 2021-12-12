@@ -1,5 +1,6 @@
 import os
 import aiohttp
+import typing as t
 
 
 class _RawClient:
@@ -19,29 +20,28 @@ class _RawClient:
         self,
         path: str,
         method: str = "GET",
-        json: dict = None,
+        data: t.Union[dict, str] = None,
         params: dict = None,
         headers: dict = None,
         **kwargs
     ):
         if headers is None:
             headers = {}
-        if json is None:
-            json = {}
-        if params is None:
-            params = {}
-        headers.update(self.headers())
-        with self.session as session:
+        headers.update(self._headers())
+        async with self.session as session:
             async with session.request(
-                self.endpoint(path),
                 method=method,
-                json=json,
+                url=self.endpoint(path),
+                data=data,
                 params=params,
+                headers=headers,
                 **kwargs
-            )
+            ) as response:
+                return await self.process_response(response)
 
     async def close(self) -> None:
         pass
 
-    async def process_response(self, response: aiohttp.Response):
-        pass
+    async def process_response(self, response: aiohttp.ClientResponse):
+        return await response.json()
+        
