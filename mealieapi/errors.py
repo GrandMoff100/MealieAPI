@@ -1,0 +1,4 @@
+class MealieError(Exception):
+    pass
+
+

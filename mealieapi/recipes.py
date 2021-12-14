@@ -28,14 +28,9 @@ class Recipe:
     date_added: datetime = None
     date_updated: datetime = None
     org_url: str = None
-
-
-    """
-    tools
-    assets
-    comments
-    """
-
+    tools: list
+    assets: list
+    comments: str
 
     def json(self):
         attrs = {
@@ -51,24 +46,37 @@ class Recipe:
             "notes",
             "org_url",
             "rating",
-            "extras"
+            "extras",
+            'id',
+            'settings',
+            'total_time',
+            'prep_time',
+            'perform_time',
+            'nutrition',
+            'date_added',
+            'date_updated',
+            'tools',
+            'assets',
+            'comments'
         }
         return {attr: getattr(self, attr) for attr in attrs}
 
-    async def create(self, return_recipe=True):
-        slug = await self._client.request(
-            "recipes/create",
-            data=self.json(),
-            method="POST"
-        )
-        return await self._client.fetch_recipe(slug)
+    async def create(self) -> "Recipe":
+        return await self._client.create_recipe(self)
 
-    async def get_image(self, type='original'):
+    async def get_image(self, type='original') -> bytes:
         """
         Gets the image for the recipe.
         Valid types are :code:`original`, :code:`min-original`, and :code:`tiny-original`
         """
-        return await self._client.request(
-            f'media/recipes/{self.slug}/images/{type}.webp',
-        )
-        
+        if self.image:
+            return await self._client.request(f'media/recipes/{self.slug}/images/{type}.webp')
+
+    async def delete(self) -> "Recipe":
+        return await self._client.delete_recipe(self.slug)
+
+    async def get_asset(self, file_name: str):
+        return await self._client.request(f'media/recipes/{self.slug}/assets/{file_name}')
+
+    async def sync_changes(self) -> "Recipe":
+        return await self._client.patch_recipe(self)
