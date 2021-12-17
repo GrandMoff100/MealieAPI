@@ -5,16 +5,16 @@ from dataclasses import dataclass
 @dataclass()
 class Auth:
     _client: "MealieClient"
-    token: str
+    access_token: str
     token_type: str = None
 
     async def refresh(self):
         resp = await self._client.request("auth/refresh")
-        self.token = resp['access_token']
+        self.access_token = resp['access_token']
         self.token_type = resp['token_type']
 
     @property
     def header(self):
         return {
-            aiohttp.hdrs.AUTHORIZATION: f"Bearer {self.token}"
+            aiohttp.hdrs.AUTHORIZATION: f"Bearer {self.access_token}"
         }

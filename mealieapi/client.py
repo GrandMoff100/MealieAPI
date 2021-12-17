@@ -7,7 +7,12 @@ from zipfile import ZipFile
 
 from mealieapi.raw import _RawClient
 from mealieapi.auth import Auth
-from mealieapi.recipes import Recipe, RecipeComment
+from mealieapi.recipes import (
+    Recipe,
+    RecipeComment,
+    RecipeImage,
+    RecipeAsset
+)
 from mealieapi.misc import (
     File,
     DebugInfo,
@@ -38,10 +43,25 @@ class MealieClient(_RawClient):
             data={
                 "username": username,
                 "password": password
-            }
+            },
+            use_auth=False
         )
-        return Auth(self, data["access_token"], data["token_type"])
+        return Auth(self, **data)
 
+    async def create_api_key(self, name: str) -> str:
+        data = await self.request(
+            f'users/api-tokens',
+            method="POST",
+            json=dict(name=name)
+        )
+        return data['token']
+
+    async def delete_api_key(self, id: int) -> None:
+        await self.request(
+            f'users/api-tokens/{id}',
+            method="DELETE"
+        )
+    
     async def login(self, username: str, password: str) -> None:
         """Makes the Client authorize with the login credentials of a user."""
         self.auth = await self._get_token(
@@ -123,22 +143,43 @@ class MealieClient(_RawClient):
 
     async def create_recipe_from_zip(self, file: io.BytesIO):
         # TODO: Look into zip file encoding to fix OSError: [Errno 22] Invalid Argument from Server logs
-        data = await self.request(
+        slug = await self.request(
             'recipes/create-from-zip',
             method="POST",
             data={'archive': file}
         )
-        return data
+        return await self.get_recipe(slug)
 
     # Recipe Images
-    async def update_recipe_image(self):
-        pass
+    async def update_recipe_image(self, recipe_slug: str, file: io.BytesIO, extension: str) -> RecipeImage:
+        data = await self.request(
+            f'recipes/{recipe_slug}/image',
+            data={'image': file, 'extension': extension},
+            method="PUT"
+        )
+        return RecipeImage(self, recipe_slug, **data)
 
-    async def update_recipe_image_from_url(self, url: str):
-        pass
+    async def update_recipe_image_from_url(self, recipe_slug: str, url: str) -> None:
+        await self.request(
+            f'recipes/{recipe_slug}/image',
+            method="POST",
+            json=dict(url=url)
+        )
 
-    async def upload_recipe_asset(self):
-        pass
+    async def upload_recipe_asset(
+        self,
+        recipe_slug: str,
+        name: str,
+        icon: str,
+        extension: str,
+        file: io.BytesIO
+    ) -> RecipeAsset:
+        data = await self.requst(
+            f'recipes/{recipe_slug}/assets',
+            data=dict(name=name, icon=icon, extension=extension, file=file),
+            method="POST"
+        )
+        return RecipeAsset(recipe_slug, **data)
 
     # Recipe Tags
     
@@ -180,7 +221,7 @@ class MealieClient(_RawClient):
         return await self._client.request(f'media/recipes/{recipe_slug}/images/{type}.webp')
 
     # Users
-
+    
     # Groups
     async def get_current_group(self):
         data = await self.request(

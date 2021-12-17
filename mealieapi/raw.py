@@ -50,7 +50,7 @@ class _RawClient:
         **kwargs
     ):
         headers = self._headers()
-        if use_auth is False:
+        if use_auth is False and self.auth is not None:
             del headers[aiohttp.hdrs.AUTHORIZATION]
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.request(

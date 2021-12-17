@@ -1,3 +1,4 @@
+import io
 import typing as t
 
 from dataclasses import dataclass
@@ -5,6 +6,25 @@ from datetime import datetime
 from zipfile import ZipFile
 
 from mealieapi.const import DATE_ADDED_FORMAT, DATE_UPDATED_FORMAT
+
+
+@dataclass()
+class RecipeImage:
+    _client: "MealieClient"
+    recipe_slug: str
+    image: int
+
+
+@dataclass()
+class RecipeAsset:
+    _client: "MealieClient"
+    recipe_slug: str
+    file_name: str
+    name: str = None
+    icon: str = None
+
+    async def content(self) -> bytes:
+        return await self.get_asset(recipe_slug, self.file_name)
 
 
 @dataclass()
