@@ -1,17 +1,27 @@
 import aiohttp
+import json
+import logging
 import os
 import re
 import typing as t
 
 
-def camel_to_snake_case(d: dict):
-    for key, value in list(d.items()):
-        new_key = re.sub(r'(?<!^)(?=[A-Z])', '_', key).lower()
-        del d[key]
-        d[new_key] = value
-        if isinstance(value, dict):
-            d[new_key] = camel_to_snake_case(value)
-    return d
+JSONObject = t.Union[list, t.Union[dict, str]]
+
+
+def camel_to_snake_case(obj: JSONObject):
+    if isinstance(obj, dict):
+        for key, value in list(obj.items()):
+            new_key = camel_to_snake_case(key)
+            del obj[key]
+            obj[new_key] = value
+            if isinstance(value, dict):
+                obj[new_key] = camel_to_snake_case(value)
+        return obj
+    elif isinstance(obj, list):
+        return [camel_to_snake_case(item) for item in obj]
+    elif isinstance(obj, str):
+        return re.sub(r'(?<!^)(?=[A-Z])', '_', obj).lower()
 
 
 class _RawClient:
@@ -25,33 +35,30 @@ class _RawClient:
 
     def _headers(self) -> dict:
         return {
-            "Accept": "application/json",
-            "User-Agent": "MealieAPI-Python 0.0.0"
+            aiohttp.hdrs.ACCEPT: "application/json",
+            aiohttp.hdrs.USER_AGENT: "MealieAPI-Python 0.0.0"
         }
 
     async def request(
         self,
         path: str,
         method: str = "GET",
-        data: t.Union[dict, str] = None,
+        data: str = None,
+        json: dict = None,
         params: dict = None,
-        headers: dict = None,
         use_auth: bool = True,
         **kwargs
     ):
-        if headers is None:
-            headers = {}
-        headers.update(self._headers())
+        headers = self._headers()
         if use_auth is False:
-            del headers['Authorization']
-
+            del headers[aiohttp.hdrs.AUTHORIZATION]
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.request(
                 method=method,
                 url=self.endpoint(path),
                 data=data,
+                json=json,
                 params=params,
-                headers=headers,
                 **kwargs
             ) as response:
                 return await self.process_response(response)
@@ -64,16 +71,17 @@ class _RawClient:
         return register_processor
 
     async def process_response(self, response: aiohttp.ClientResponse) -> t.Any:
-        print('Status:', response.status)
-        print('URL:', response.url)
-        print('Method:', response.method)
-        print('Content:', await response.read())
+        logging.debug(f'Status: {response.status}')
+        logging.debug(f'URL: {response.url}')
+        logging.debug(f'Method: {response.method}')
+        logging.debug(f'Content: {await response.read()}'[:100] + '...')
+        logging.debug(response.request_info)
         if 200 <= response.status < 300:
-            def default_handler(response: aiohttp.ClientResponse) -> bytes:
+            async def default_handler(response: aiohttp.ClientResponse) -> bytes:
                 return await response.read()
-            content_type = response.headers.get('Content-Type')
+            content_type = response.headers.get(aiohttp.hdrs.CONTENT_TYPE)
             processor = self.response_processors.get(content_type, default_handler)
-            return processor(response)
+            return await processor(response)
 
         elif 400 <= response.status < 500:
             # TODO: Create Error handling system for json error responses
@@ -87,7 +95,7 @@ class _RawClient:
 
 
 @_RawClient.response_processor('application/json')
-def process_json(self, response: aiohttp.ClientResponse) -> t.Union[dict, str]:
+async def process_json(response: aiohttp.ClientResponse) -> t.Union[dict, str]:
     data = await response.json()
     if isinstance(data, dict) or isinstance(data, list):
         data = camel_to_snake_case(data)
@@ -95,7 +103,7 @@ def process_json(self, response: aiohttp.ClientResponse) -> t.Union[dict, str]:
 
 
 @_RawClient.response_processor("application/octet-stream")
-def process_stream(self, response: aiohttp.ClientResponse):
+async def process_stream(response: aiohttp.ClientResponse):
     pass
 
 

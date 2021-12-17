@@ -1,3 +1,4 @@
+import aiohttp
 from dataclasses import dataclass
 
 
@@ -15,5 +16,5 @@ class Auth:
     @property
     def header(self):
         return {
-            "Authorization": f"Bearer {self.token}"
+            aiohttp.hdrs.AUTHORIZATION: f"Bearer {self.token}"
         }
