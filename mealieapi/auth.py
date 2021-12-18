@@ -3,6 +3,16 @@ from dataclasses import dataclass
 
 
 @dataclass()
+class Token:
+    _client: "MealieClient"
+    name: str
+    id: int
+
+    async def delete(self) -> None:
+        await self._client.delete_api_key(self.id)
+
+
+@dataclass()
 class Auth:
     _client: "MealieClient"
     access_token: str

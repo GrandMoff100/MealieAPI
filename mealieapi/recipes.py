@@ -6,6 +6,7 @@ from datetime import datetime
 from zipfile import ZipFile
 
 from mealieapi.const import DATE_ADDED_FORMAT, DATE_UPDATED_FORMAT
+from mealieapi.misc import name_to_slug
 
 
 @dataclass()
@@ -74,8 +75,7 @@ class Recipe:
 
     @property
     def slug(self):
-        letters = filter(lambda char: char in 'qwertyuiopasdfghjklzxcvbnm ', self.name.lower())
-        return ''.join(letters).replace(' ', '-')
+        return name_to_slug(self.name)
 
     def json(self) -> dict:
         attrs = {
@@ -148,9 +148,28 @@ class Recipe:
 
 @dataclass()
 class RecipeTag:
-    pass
+    _client: "MealieClient"
+    id: int
+    name: str
+    recipes: t.List[Recipe] = None
 
+    @property
+    def slug(self):
+        return name_to_slug(self.name)
+
+    async def update(self, new_name: str) -> None:
+        tag = await self._client.update_tag
+
+    async def delete(self):
+        pass
 
 @dataclass()
 class RecipeCategory:
-    pass
+    _client: "MealieClient"
+    id: int
+    name: str
+    recipes: t.List[Recipe] = None
+
+    @property
+    def slug(self):
+        return name_to_slug(self.name)

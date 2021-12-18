@@ -5,23 +5,7 @@ import os
 import re
 import typing as t
 
-
-JSONObject = t.Union[list, t.Union[dict, str]]
-
-
-def camel_to_snake_case(obj: JSONObject):
-    if isinstance(obj, dict):
-        for key, value in list(obj.items()):
-            new_key = camel_to_snake_case(key)
-            del obj[key]
-            obj[new_key] = value
-            if isinstance(value, dict):
-                obj[new_key] = camel_to_snake_case(value)
-        return obj
-    elif isinstance(obj, list):
-        return [camel_to_snake_case(item) for item in obj]
-    elif isinstance(obj, str):
-        return re.sub(r'(?<!^)(?=[A-Z])', '_', obj).lower()
+from mealieapi.misc import camel_to_snake_case
 
 
 class _RawClient:
