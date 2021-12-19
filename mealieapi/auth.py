@@ -1,10 +1,14 @@
+import typing as t
+from dataclasses import dataclass, field
+
 import aiohttp
-from dataclasses import dataclass
+if t.TYPE_CHECKING:
+    from mealieapi.client import MealieClient
 
 
 @dataclass()
 class Token:
-    _client: "MealieClient"
+    _client: "MealieClient" = field(repr=False)
     name: str
     id: int
 
@@ -14,17 +18,15 @@ class Token:
 
 @dataclass()
 class Auth:
-    _client: "MealieClient"
+    _client: "MealieClient" = field(repr=False)
     access_token: str
     token_type: str = None
 
     async def refresh(self):
         resp = await self._client.request("auth/refresh")
-        self.access_token = resp['access_token']
-        self.token_type = resp['token_type']
+        self.access_token = resp["access_token"]
+        self.token_type = resp["token_type"]
 
     @property
     def header(self):
-        return {
-            aiohttp.hdrs.AUTHORIZATION: f"Bearer {self.access_token}"
-        }
+        return {aiohttp.hdrs.AUTHORIZATION: f"Bearer {self.access_token}"}

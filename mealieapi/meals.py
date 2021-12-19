@@ -9,4 +9,3 @@ class MealPlan:
 @dataclass()
 class ShoppingList:
     pass
-

@@ -1,9 +1,10 @@
-import aiohttp
 import json
 import logging
 import os
 import re
 import typing as t
+
+import aiohttp
 
 from mealieapi.misc import camel_to_snake_case
 
@@ -15,12 +16,12 @@ class _RawClient:
         self.url = url
 
     def endpoint(self, path: str) -> str:
-        return os.path.join(self.url, 'api', path)
+        return os.path.join(self.url, "api", path)
 
     def _headers(self) -> dict:
         return {
             aiohttp.hdrs.ACCEPT: "application/json",
-            aiohttp.hdrs.USER_AGENT: "MealieAPI-Python 0.0.0"
+            aiohttp.hdrs.USER_AGENT: "MealieAPI-Python 0.0.0",
         }
 
     async def request(
@@ -31,7 +32,7 @@ class _RawClient:
         json: dict = None,
         params: dict = None,
         use_auth: bool = True,
-        **kwargs
+        **kwargs,
     ):
         headers = self._headers()
         if use_auth is False and self.auth is not None:
@@ -43,7 +44,7 @@ class _RawClient:
                 data=data,
                 json=json,
                 params=params,
-                **kwargs
+                **kwargs,
             ) as response:
                 return await self.process_response(response)
 
@@ -52,17 +53,20 @@ class _RawClient:
         def register_processor(processor: t.Callable):
             _RawClient.response_processors[mimetype] = processor
             return processor
+
         return register_processor
 
     async def process_response(self, response: aiohttp.ClientResponse) -> t.Any:
-        logging.debug(f'Status: {response.status}')
-        logging.debug(f'URL: {response.url}')
-        logging.debug(f'Method: {response.method}')
-        logging.debug(f'Content: {await response.read()}'[:100] + '...')
+        logging.debug(f"Status: {response.status}")
+        logging.debug(f"URL: {response.url}")
+        logging.debug(f"Method: {response.method}")
+        logging.debug(f"Content: {await response.read()!r}"[:100] + "...")
         logging.debug(response.request_info)
         if 200 <= response.status < 300:
+
             async def default_handler(response: aiohttp.ClientResponse) -> bytes:
                 return await response.read()
+
             content_type = response.headers.get(aiohttp.hdrs.CONTENT_TYPE)
             processor = self.response_processors.get(content_type, default_handler)
             return await processor(response)
@@ -78,7 +82,7 @@ class _RawClient:
         pass
 
 
-@_RawClient.response_processor('application/json')
+@_RawClient.response_processor("application/json")
 async def process_json(response: aiohttp.ClientResponse) -> t.Union[dict, str]:
     data = await response.json()
     if isinstance(data, dict) or isinstance(data, list):
@@ -89,6 +93,3 @@ async def process_json(response: aiohttp.ClientResponse) -> t.Union[dict, str]:
 @_RawClient.response_processor("application/octet-stream")
 async def process_stream(response: aiohttp.ClientResponse):
     pass
-
-
-

@@ -1,13 +1,16 @@
+import re
 import typing as t
 from dataclasses import dataclass
 
 
 JSONObject = t.Union[list, t.Union[dict, str]]
+if t.TYPE_CHECKING:
+    from mealieapi.client import MealieClient
 
 
 def name_to_slug(name):
-    letters = filter(lambda char: char in 'qwertyuiopasdfghjklzxcvbnm ', name.lower())
-    return ''.join(letters).replace(' ', '-')
+    letters = filter(lambda char: char in "qwertyuiopasdfghjklzxcvbnm ", name.lower())
+    return "".join(letters).replace(" ", "-")
 
 
 def camel_to_snake_case(obj: JSONObject):
@@ -22,7 +25,7 @@ def camel_to_snake_case(obj: JSONObject):
     elif isinstance(obj, list):
         return [camel_to_snake_case(item) for item in obj]
     elif isinstance(obj, str):
-        return re.sub(r'(?<!^)(?=[A-Z])', '_', obj).lower()
+        return re.sub(r"(?<!^)(?=[A-Z])", "_", obj).lower()
 
 
 @dataclass()

@@ -1,7 +1,6 @@
 import io
 import typing as t
-
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from zipfile import ZipFile
 
@@ -9,16 +8,20 @@ from mealieapi.const import DATE_ADDED_FORMAT, DATE_UPDATED_FORMAT
 from mealieapi.misc import name_to_slug
 
 
+if t.TYPE_CHECKING:
+    from mealieapi.client import MealieClient
+
+
 @dataclass()
 class RecipeImage:
-    _client: "MealieClient"
+    _client: "MealieClient" = field(repr=False)
     recipe_slug: str
     image: int
 
 
 @dataclass()
 class RecipeAsset:
-    _client: "MealieClient"
+    _client: "MealieClient" = field(repr=False)
     recipe_slug: str
     file_name: str
     name: str = None
@@ -30,14 +33,12 @@ class RecipeAsset:
 
 @dataclass()
 class RecipeComment:
-    _client: "MealieClient"
+    _client: "MealieClient" = field(repr=False)
     recipt_slug: str
     text: str
 
     def json(self) -> dict:
-        return {
-            'text': self.text
-        }
+        return {"text": self.text}
 
     async def update(self, text: str) -> "RecipeComment":
         return await self._client.update_recipe_comment(self.recipe_slug, text)
@@ -48,7 +49,7 @@ class RecipeComment:
 
 @dataclass(repr=False)
 class Recipe:
-    _client: "MealieClient"
+    _client: "MealieClient" = field(repr=False)
     name: str
     description: str = None
     image: str = None
@@ -92,25 +93,25 @@ class Recipe:
             "org_url",
             "rating",
             "extras",
-            'id',
-            'settings',
-            'total_time',
-            'prep_time',
-            'perform_time',
-            'nutrition',
-            'date_added',
-            'date_updated',
-            'tools',
-            'assets',
-            'comments'
+            "id",
+            "settings",
+            "total_time",
+            "prep_time",
+            "perform_time",
+            "nutrition",
+            "date_added",
+            "date_updated",
+            "tools",
+            "assets",
+            "comments",
         }
-        
+
         data = {attr: getattr(self, attr) for attr in attrs}
-        data['comments'] = [comment.json() for comment in data['comments']]
-        if data['date_added']:
-            data['date_added'] = data['date_added'].strftime(DATE_ADDED_FORMAT)
-        if data['date_updated']:
-            data['date_updated'] = data['date_updated'].strftime(DATE_UPDATED_FORMAT)
+        data["comments"] = [comment.json() for comment in data["comments"]]
+        if data["date_added"]:
+            data["date_added"] = data["date_added"].strftime(DATE_ADDED_FORMAT)
+        if data["date_updated"]:
+            data["date_updated"] = data["date_updated"].strftime(DATE_UPDATED_FORMAT)
         return data
 
     async def create(self) -> "Recipe":
@@ -122,7 +123,7 @@ class Recipe:
     async def get_asset(self, file_name: str):
         return await self._client.get_asset(self.slug, file_name)
 
-    async def get_image(self, type='original') -> bytes:
+    async def get_image(self, type="original") -> bytes:
         """
         Gets the image for the recipe.
         Valid types are :code:`original`, :code:`min-original`, and :code:`tiny-original`
@@ -131,7 +132,7 @@ class Recipe:
             return await self._client.get_image(self.slug, type)
 
     async def push_changes(self) -> "Recipe":
-        return await self._client.patch_recipe(self)
+        return await self._client.update_recipe(self)
 
     async def get_zip(self) -> ZipFile:
         return await self._client.get_recipe_zip(self.slug)
@@ -139,7 +140,7 @@ class Recipe:
     async def refresh(self) -> None:
         recipe = await self._client.get_recipe(self.slug)
         for attr in dir(recipe):
-            if not attr.startswith('_'):
+            if not attr.startswith("_"):
                 setattr(self, attr, getattr(recipe, attr))
 
     def __repr__(self):
@@ -148,7 +149,7 @@ class Recipe:
 
 @dataclass()
 class RecipeTag:
-    _client: "MealieClient"
+    _client: "MealieClient" = field(repr=False)
     id: int
     name: str
     recipes: t.List[Recipe] = None
@@ -163,9 +164,10 @@ class RecipeTag:
     async def delete(self):
         pass
 
+
 @dataclass()
 class RecipeCategory:
-    _client: "MealieClient"
+    _client: "MealieClient" = field(repr=False)
     id: int
     name: str
     recipes: t.List[Recipe] = None

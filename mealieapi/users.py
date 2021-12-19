@@ -1,5 +1,6 @@
 import typing as t
 from dataclasses import dataclass
+
 from mealieapi.auth import Token
 
 
@@ -10,6 +11,7 @@ class UserSignup:
 
 @dataclass()
 class User:
+    _client: "MealieClient"
     username: str = None
     full_name: str = None
     email: str = None
