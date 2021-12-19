@@ -6,21 +6,21 @@ from zipfile import ZipFile
 
 from mealieapi.const import DATE_ADDED_FORMAT, DATE_UPDATED_FORMAT
 from mealieapi.misc import name_to_slug
-
+from mealieapi.mixins import JsonModel
 
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
 
 
 @dataclass()
-class RecipeImage:
+class RecipeImage(JsonModel):
     _client: "MealieClient" = field(repr=False)
     recipe_slug: str
     image: int
 
 
 @dataclass()
-class RecipeAsset:
+class RecipeAsset(JsonModel):
     _client: "MealieClient" = field(repr=False)
     recipe_slug: str
     file_name: str
@@ -32,13 +32,17 @@ class RecipeAsset:
 
 
 @dataclass()
-class RecipeComment:
+class RecipeComment(JsonModel):
     _client: "MealieClient" = field(repr=False)
     recipt_slug: str
     text: str
 
     def json(self) -> dict:
-        return {"text": self.text}
+        return super().json(
+            {
+                "text",
+            }
+        )
 
     async def update(self, text: str) -> "RecipeComment":
         return await self._client.update_recipe_comment(self.recipe_slug, text)
@@ -79,35 +83,36 @@ class Recipe:
         return name_to_slug(self.name)
 
     def json(self) -> dict:
-        attrs = {
-            "slug",
-            "name",
-            "description",
-            "image",
-            "recipe_yield",
-            "recipe_ingredient",
-            "recipe_instructions",
-            "tags",
-            "recipe_category",
-            "notes",
-            "org_url",
-            "rating",
-            "extras",
-            "id",
-            "settings",
-            "total_time",
-            "prep_time",
-            "perform_time",
-            "nutrition",
-            "date_added",
-            "date_updated",
-            "tools",
-            "assets",
-            "comments",
-        }
+        data = super().json(
+            {
+                "slug",
+                "name",
+                "description",
+                "image",
+                "recipe_yield",
+                "recipe_ingredient",
+                "recipe_instructions",
+                "tags",
+                "recipe_category",
+                "notes",
+                "org_url",
+                "rating",
+                "extras",
+                "id",
+                "settings",
+                "total_time",
+                "prep_time",
+                "perform_time",
+                "nutrition",
+                "date_added",
+                "date_updated",
+                "tools",
+                "assets",
+                "comments",
+            }
+        )
 
         data = {attr: getattr(self, attr) for attr in attrs}
-        data["comments"] = [comment.json() for comment in data["comments"]]
         if data["date_added"]:
             data["date_added"] = data["date_added"].strftime(DATE_ADDED_FORMAT)
         if data["date_updated"]:

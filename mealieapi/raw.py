@@ -6,6 +6,7 @@ import typing as t
 
 import aiohttp
 
+from mealieapi.auth import Auth
 from mealieapi.misc import camel_to_snake_case
 
 
@@ -28,12 +29,12 @@ class _RawClient:
         self,
         path: str,
         method: str = "GET",
-        data: str = None,
-        json: dict = None,
-        params: dict = None,
+        data: t.Union[str, None] = None,
+        json: t.Union[dict, None] = None,
+        params: t.Union[dict, None] = None,
         use_auth: bool = True,
         **kwargs,
-    ):
+    ) -> t.Union[bytes, dict]:
         headers = self._headers()
         if use_auth is False and self.auth is not None:
             del headers[aiohttp.hdrs.AUTHORIZATION]
@@ -49,7 +50,7 @@ class _RawClient:
                 return await self.process_response(response)
 
     @staticmethod
-    def response_processor(mimetype: str):
+    def response_processor(mimetype: str) -> t.Callable:
         def register_processor(processor: t.Callable):
             _RawClient.response_processors[mimetype] = processor
             return processor
@@ -70,11 +71,9 @@ class _RawClient:
             content_type = response.headers.get(aiohttp.hdrs.CONTENT_TYPE)
             processor = self.response_processors.get(content_type, default_handler)
             return await processor(response)
-
         elif 400 <= response.status < 500:
             # TODO: Create Error handling system for json error responses
             raise ValueError(f"Status Code {response.status}: {await response.json()}")
-
         else:
             raise ValueError("Internal Server Error")
 
@@ -92,4 +91,36 @@ async def process_json(response: aiohttp.ClientResponse) -> t.Union[dict, str]:
 
 @_RawClient.response_processor("application/octet-stream")
 async def process_stream(response: aiohttp.ClientResponse):
-    pass
+    return await response.read()
+
+
+class RawClient(_RawClient):
+    def __init__(self, url, auth: t.Union[Auth, None] = None) -> None:
+        super().__init__(url)
+        self.auth = auth
+
+    # Authorization
+    def _headers(self) -> dict:
+        """Updates the Raw Client headers with the Authorization header."""
+        headers = super()._headers()
+        if self.auth is not None:
+            headers.update(self.auth.header)
+        return headers
+
+    async def _get_token(self, username: str, password: str) -> Auth:
+        """Exchanges the login credentials of a user for a temporary API token."""
+        data = await self.request(
+            "auth/token",
+            method="POST",
+            data={"username": username, "password": password},
+            use_auth=False,
+        )
+        return Auth(self, **data)
+
+    async def login(self, username: str, password: str) -> None:
+        """Makes the Client authorize with the login credentials of a user."""
+        self.auth = await self._get_token(username, password)
+
+    def authorize(self, token: str) -> None:
+        """Makes the Client authorize with an API token."""
+        self.auth = Auth(self, token)

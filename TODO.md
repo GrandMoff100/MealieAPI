@@ -21,6 +21,8 @@ What needs to be done so far before Version 0.0.1?
 - [ ] Implement Backups
 - [ ] Implement Migrations
 - [ ] Implement Settings
+- [ ] Implement Event and notifications
 
 ## Maintenance
 - [ ] Add examples to README in `examples/`
+- [ ] Add Test Suite to test endpoints

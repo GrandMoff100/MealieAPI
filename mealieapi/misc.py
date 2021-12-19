@@ -2,7 +2,6 @@ import re
 import typing as t
 from dataclasses import dataclass
 
-
 JSONObject = t.Union[list, t.Union[dict, str]]
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient

@@ -5,113 +5,116 @@ from zipfile import ZipFile
 
 import aiohttp
 
-from mealieapi.auth import Auth
+from mealieapi.auth import Auth, Token
 from mealieapi.const import DATE_ADDED_FORMAT, DATE_UPDATED_FORMAT
 from mealieapi.misc import DebugInfo, DebugStatistics, DebugVersion, File
-from mealieapi.raw import _RawClient
-from mealieapi.recipes import (
-    Recipe,
-    RecipeAsset,
-    RecipeCategory,
-    RecipeComment,
-    RecipeImage,
-    RecipeTag
-)
-from mealieapi.users import Group, User
+from mealieapi.raw import RawClient
+from mealieapi.recipes import (Recipe, RecipeAsset, RecipeCategory,
+                               RecipeComment, RecipeImage, RecipeTag)
+from mealieapi.users import Group, User, UserSignup
 
 
-class MealieClient(_RawClient):
-    def __init__(self, url, auth: Auth = None) -> None:
-        super().__init__(url)
-        self.auth = auth
-
-    # Authorization
-    def _headers(self) -> dict:
-        """Updates the Raw Client headers with the Authorization header."""
-        headers = super()._headers()
-        if self.auth is not None:
-            headers.update(self.auth.header)
-        return headers
-
-    async def _get_token(self, username: str, password: str) -> Auth:
-        """Exchanges the login credentials of a user for a temporary API token."""
-        data = await self.request(
-            "auth/token",
-            method="POST",
-            data={"username": username, "password": password},
-            use_auth=False,
-        )
-        return Auth(self, **data)
-
-    async def login(self, username: str, password: str) -> None:
-        """Makes the Client authorize with the login credentials of a user."""
-        self.auth = await self._get_token(username, password)
-
-    def authorize(self, token: str) -> None:
-        """Makes the Client authorize with an API token."""
-        self.auth = Auth(self, token)
-
+class MealieClient(RawClient):
     # User API Keys
-    async def create_api_key(self, name: str) -> str:
+    def process_token_json(self, data: dict) -> Token:
+        return Token(self, **data)
+
+    async def create_api_key(self, name: str) -> Token:
         data = await self.request(
             f"users/api-tokens", method="POST", json=dict(name=name)
         )
-        return data["token"]
+        return self.process_token_json(data)
 
     async def delete_api_key(self, id: int) -> None:
         await self.request(f"users/api-tokens/{id}", method="DELETE")
 
     # User Signups
-    async def signup_with_token(self):
-        "Use auth = false"
+    async def signup_with_token(self, token: str, user: User) -> User:
+        data = await self.request(
+            f"users/sign-ups/{token}", method="POST", json=user.json(), use_auth=False
+        )
+        return self.process_user_json(data)
 
-    async def delete_signup_key(self):
-        pass
+    async def delete_signup_token(self, token: str) -> None:
+        await self.request(f"users/sign-ups/{token}", method="DELETE")
 
-    async def get_open_signups(self):
-        pass
+    async def get_open_signups(self) -> t.List[UserSignup]:
+        data = await self.request(f"users/sign-ups")
+        return [UserSignup(self, **signup) for signup in data]
 
-    async def create_signup_key(self):
-        pass
+    async def create_signup_token(self, name: str, admin: bool = False) -> UserSignup:
+        data = await self.request(
+            f"users/sign-ups", method="POST", json=dict(name=name, admin=admin)
+        )
+        return UserSignup(self, **data)
 
     # Users
-    async def get_user_image(self):
-        pass
+    def process_user_json(self, data: dict) -> User:
+        if data.get("favorite_recipes"):
+            data["favorite_recipes"] = [
+                self.process_recipe_json(recipe) for recipe in recipes
+            ]
+        if data.get("tokens"):
+            data["tokens"] = [
+                self.process_token_json(token_data) for token_data in data["tokens"]
+            ]
+        return User(self, **data)
 
-    async def update_user_image(self):
-        pass
+    async def get_user_image(self, user_id: int) -> bytes:
+        return await self.request(f"users/{user_id}/image", use_auth=False)
 
-    async def get_user(self):
-        pass
+    async def update_user_image(self, user_id: int, file: io.BytesIO) -> bytes:
+        return await self.request(
+            f"users/{user_id}/image", data=dict(profile_image=file)
+        )
 
-    async def update_user(self):
-        pass
+    async def get_user(self, user_id: int) -> User:
+        data = await self.request(f"users/{user_id}")
+        return self.process_user_json(data)
 
-    async def delete_user(self):
-        pass
+    async def update_user(self, user_id: int, user: User) -> User:
+        data = await self.request(f"users/{user_id}", method="PUT", json=user.json())
+        return self.process_user_json(data)
 
-    async def reset_password(self):
-        pass
+    async def delete_user(self, user_id: int) -> None:
+        await self.request(f"users/{user_id}", method="DELETE")
 
-    async def update_password(self):
-        pass
+    async def reset_password(self, user_id: int) -> None:
+        await self.request(f"users/{user_id}/reset-password", method="PUT")
 
-    async def get_favorites(self):
-        pass
+    async def update_password(
+        self, user_id: int, current_password: str, new_password: str
+    ) -> None:
+        await self.request(
+            f"users/{user_id}/password",
+            method="PUT",
+            json=dict(current_password=current_password, new_password=new_password),
+        )
 
-    async def add_favorite(self):
-        pass
+    async def get_favorites(self, user_id: int) -> t.List[Recipe]:
+        data = await self.request(f"users/{user_id}/favorites")
+        user = self.process_user_json(data)
+        return user.favorite_recipes
 
-    async def remote_favorite(self):
-        pass
+    async def add_favorite(self, user_id: int, recipe_slug: str) -> None:
+        await self.request(f"users/{user_id}/favorites/{recipe_slug}", method="POST")
 
-    async def get_all_users(self):
-        pass
+    async def remove_favorite(self, user_id: int, recipe_slug: str):
+        await self.request(f"users/{user_id}/{recipe_slug}", method="DELETE")
 
-    async def create_user(self):
-        pass
+    async def get_all_users(self) -> t.List[User]:
+        data = await self.request("users")
+        return [self.process_user_json(user) for user in data]
+
+    async def create_user(self, user: User) -> User:
+        data = await self.request("users", method="POST", json=user.json())
+        return self.process_user_json(data)
 
     # Groups
+    def process_group_json(self, data: dict) -> Group:
+        data["users"] = [self.process_user_json(info) for info in data["users"]]
+        return Group(self, **data)
+
     async def get_groups(self):
         pass
 
@@ -125,13 +128,13 @@ class MealieClient(_RawClient):
         pass
 
     # Current User
-    async def get_current_user(self):
-        pass
+    async def get_current_user(self) -> User:
+        data = await self.request("users/self")
+        return self.process_user_json(data)
 
     async def get_current_group(self) -> Group:
         data = await self.request("groups/self")
-        data["users"] = [User(**info) for info in data["users"]]
-        return Group(**data)
+        return self.process_group_json(data)
 
     # Query All Recipes
     async def get_recipes(self, start=0, limit=9999) -> t.List[Recipe]:
@@ -232,7 +235,7 @@ class MealieClient(_RawClient):
 
     # Recipe Tags
     def process_tag_json(self, data: dict) -> RecipeTag:
-        if data.get('recipes'):
+        if data.get("recipes"):
             data["recipes"] = [
                 self.process_recipe_json(recipe) for recipe in data["recipes"]
             ]
@@ -366,18 +369,14 @@ class MealieClient(_RawClient):
 
     # Site Media
     async def get_asset(self, recipe_slug: str, file_name: str) -> bytes:
-        return await self.request(
-            f"media/recipes/{recipe_slug}/assets/{file_name}"
-        )
+        return await self.request(f"media/recipes/{recipe_slug}/assets/{file_name}")
 
     async def get_image(self, recipe_slug: str, type="original") -> bytes:
         """
         Gets the image for the recipe.
         Valid types are :code:`original`, :code:`min-original`, and :code:`tiny-original`
         """
-        return await self.request(
-            f"media/recipes/{recipe_slug}/images/{type}.webp"
-        )
+        return await self.request(f"media/recipes/{recipe_slug}/images/{type}.webp")
 
     # Debug
     async def get_log_file(self) -> File:

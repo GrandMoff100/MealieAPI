@@ -2,15 +2,22 @@ import typing as t
 from dataclasses import dataclass, field
 
 import aiohttp
+
+from mealieapi.mixins import JsonModel
+
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
 
 
 @dataclass()
-class Token:
+class Token(JsonModel):
     _client: "MealieClient" = field(repr=False)
     name: str
     id: int
+    token: t.Union[str, None] = None
+
+    def json(self) -> dict:
+        return super().json({"name", "id"})
 
     async def delete(self) -> None:
         await self._client.delete_api_key(self.id)
