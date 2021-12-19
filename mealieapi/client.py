@@ -9,8 +9,14 @@ from mealieapi.auth import Auth, Token
 from mealieapi.const import DATE_ADDED_FORMAT, DATE_UPDATED_FORMAT
 from mealieapi.misc import DebugInfo, DebugStatistics, DebugVersion, File
 from mealieapi.raw import RawClient
-from mealieapi.recipes import (Recipe, RecipeAsset, RecipeCategory,
-                               RecipeComment, RecipeImage, RecipeTag)
+from mealieapi.recipes import (
+    Recipe,
+    RecipeAsset,
+    RecipeCategory,
+    RecipeComment,
+    RecipeImage,
+    RecipeTag,
+)
 from mealieapi.users import Group, User, UserSignup
 
 
@@ -36,7 +42,10 @@ class MealieClient(RawClient):
         return self.process_user_json(data)
 
     async def delete_signup_token(self, token: str) -> None:
-        await self.request(f"users/sign-ups/{token}", method="DELETE")
+        if token is None:
+            await self.request(f"users/sign-ups/{token}", method="DELETE")
+        else:
+            raise ValueError("Token string cannot be NoneType must be string")
 
     async def get_open_signups(self) -> t.List[UserSignup]:
         data = await self.request(f"users/sign-ups")
@@ -116,30 +125,19 @@ class MealieClient(RawClient):
         return Group(self, **data)
 
     async def get_groups(self) -> t.List[Group]:
-        data = await self.request('groups')
+        data = await self.request("groups")
         return [self.process_group_json(group) for group in data]
-    
+
     async def create_group(self, group: Group) -> Group:
-        data = await self.request(
-            'groups',
-            method="POST",
-            json=group.json()
-        )
+        data = await self.request("groups", method="POST", json=group.json())
         return self.process_group_json(data)
 
     async def update_group(self, id: int, group: Group) -> Group:
-        data = await self.request(
-            f'groups/{id}',
-            method="PUT",
-            json=group.json()
-        )
+        data = await self.request(f"groups/{id}", method="PUT", json=group.json())
         return self.process_group_json(data)
 
     async def delete_group(self, id: int) -> None:
-        await self.request(
-            f'groups/{id}',
-            method="DELETE"
-        )
+        await self.request(f"groups/{id}", method="DELETE")
 
     # Current User
     async def get_current_user(self) -> User:

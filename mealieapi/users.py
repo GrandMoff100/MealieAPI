@@ -1,25 +1,16 @@
+import io
 import typing as t
 from dataclasses import dataclass, field
 from datetime import timedelta
 
 from mealieapi.auth import Token
 from mealieapi.meals import MealPlan, ShoppingList
+from mealieapi.recipes import Recipe
 from mealieapi.mixins import JsonModel
 from mealieapi.recipes import Recipe, RecipeCategory
 
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
-
-
-@dataclass()
-class UserSignup(JsonModel):
-    _client: "MealieClient" = field(repr=False)
-    name: str
-    admin: bool
-    token: t.Union[str, None] = None
-
-    def json(self) -> dict:
-        return super().json({"name", "admin"})
 
 
 @dataclass()
@@ -49,8 +40,38 @@ class User(JsonModel):
             }
         )
 
-    async def create_with_token(self):
-        pass
+    async def create(self) -> User:
+        return await self._client.create_user(self)
+
+    async def update(self) -> User:
+        return await self._client.update_user(self.id, self)
+
+    async def delete(self) -> None:
+        await self._client.delete_user(self.id)
+
+    async def reset_password(self) -> None:
+        await self._client.reset_password(self.id)
+
+    async def update_password(self, new_password: str):
+        if self.password:
+            await self._client.update_password(self.id, self.password, new_password)
+        else:
+            raise ValueError('Missing password attribute, required to change password.')
+
+    async def favorites(self) -> t.List[Recipe]:
+        return await self._client.get_favorites(self.id)
+    
+    async def add_favorite(self, recipe_slug: str) -> None:
+        await self._client.add_favorite(self.id, recipe_slug)
+
+    async def remote_favorite(self, recipe_slug: str) -> None:
+        await self._client.remove_favorite(self.id, recipe_slug)
+
+    async def image(self) -> bytes:
+        return self._client.get_user_image(self.id)
+
+    async def update_image(self, image: io.BytesIO) -> bytes:
+        return await self._client.update_user_image(self.id, image)
 
 
 @dataclass()
@@ -67,8 +88,33 @@ class Group(JsonModel):
     webhook_enable: t.Union[bool, None] = None
 
     def json(self) -> dict:
-        return super().json({
-            'name',
-            'webhook_urls',
-            'webhook_enable'
-        })
+        return super().json({"name", "webhook_urls", "webhook_enable"})
+
+    async def create(self) -> Group:
+        return await self._client.create_group(self)
+
+    async def update(self) -> Group:
+        return await self._client.update_group(self.id, self)
+
+    async def delete(self) -> None:
+        return await self._client.delete_group(self.id)
+
+
+@dataclass()
+class UserSignup(JsonModel):
+    _client: "MealieClient" = field(repr=False)
+    name: str
+    admin: bool
+    token: t.Union[str, None] = None
+
+    def json(self) -> dict:
+        return super().json({"name", "admin"})
+
+    async def delete(self) -> None:
+        await self._client.delete_signup_token(self.token)
+
+    async def signup(self, user: User) -> User:
+        if self.token:
+            await self._client.signup_with_token(self.token, user)
+        else:
+            raise ValueError("Tried to signup user without signup token")
