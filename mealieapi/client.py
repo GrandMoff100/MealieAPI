@@ -115,17 +115,31 @@ class MealieClient(RawClient):
         data["users"] = [self.process_user_json(info) for info in data["users"]]
         return Group(self, **data)
 
-    async def get_groups(self):
-        pass
+    async def get_groups(self) -> t.List[Group]:
+        data = await self.request('groups')
+        return [self.process_group_json(group) for group in data]
+    
+    async def create_group(self, group: Group) -> Group:
+        data = await self.request(
+            'groups',
+            method="POST",
+            json=group.json()
+        )
+        return self.process_group_json(data)
 
-    async def create_group(self):
-        pass
+    async def update_group(self, id: int, group: Group) -> Group:
+        data = await self.request(
+            f'groups/{id}',
+            method="PUT",
+            json=group.json()
+        )
+        return self.process_group_json(data)
 
-    async def update_group(self):
-        pass
-
-    async def delete_group(self):
-        pass
+    async def delete_group(self, id: int) -> None:
+        await self.request(
+            f'groups/{id}',
+            method="DELETE"
+        )
 
     # Current User
     async def get_current_user(self) -> User:

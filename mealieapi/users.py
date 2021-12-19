@@ -57,11 +57,18 @@ class User(JsonModel):
 class Group(JsonModel):
     _client: "MealieClient" = field(repr=False)
     name: str
-    id: int
-    categories: t.List[RecipeCategory]
-    webhook_urls: t.List[str]
-    webhook_time: timedelta
-    webhook_enable: bool
-    users: t.List[User]
-    mealplans: t.List[MealPlan]
-    shoppinglists: t.List[ShoppingList]
+    id: t.Union[int, None] = None
+    categories: t.Union[t.List[RecipeCategory], None] = None
+    webhook_urls: t.Union[t.List[str], None] = None
+    webhook_time: t.Union[timedelta, None] = None
+    users: t.Union[t.List[User], None] = None
+    mealplans: t.Union[t.List[MealPlan], None] = None
+    shoppinglists: t.Union[t.List[ShoppingList], None] = None
+    webhook_enable: t.Union[bool, None] = None
+
+    def json(self) -> dict:
+        return super().json({
+            'name',
+            'webhook_urls',
+            'webhook_enable'
+        })
