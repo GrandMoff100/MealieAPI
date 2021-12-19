@@ -6,10 +6,21 @@ What needs to be done so far before Version 0.0.0?
 - [ ] Fix linting errors
 - [ ] Implement User and user Group
 - [ ] Implement MealPlan and ShoppingList
-- [ ] 
 
 ## Maintainence
 - [ ] Setup Type Checking CI/CD Workflow
 - [ ] Setup Linting CI/CD Workflow
+- [ ] Structure and Fill README
+- [ ] Config setup.cfg
 
-## Documentation
+# Version 0.0.1
+What needs to be done so far before Version 0.0.1?
+
+## Development
+- [ ] Implement Themes
+- [ ] Implement Backups
+- [ ] Implement Migrations
+- [ ] Implement Settings
+
+## Maintenance
+- [ ] Add examples to README in `examples/`
