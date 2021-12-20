@@ -5,12 +5,17 @@ from zipfile import ZipFile
 
 from mealieapi.auth import Token
 from mealieapi.const import YEAR_MONTH_DAY, YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
-from mealieapi.meals import (Ingredient, Meal, MealPlan, MealPlanDay,
-                             ShoppingList)
+from mealieapi.meals import Ingredient, Meal, MealPlan, MealPlanDay, ShoppingList
 from mealieapi.misc import DebugInfo, DebugStatistics, DebugVersion, File
 from mealieapi.raw import RawClient
-from mealieapi.recipes import (Recipe, RecipeAsset, RecipeCategory,
-                               RecipeComment, RecipeImage, RecipeTag)
+from mealieapi.recipes import (
+    Recipe,
+    RecipeAsset,
+    RecipeCategory,
+    RecipeComment,
+    RecipeImage,
+    RecipeTag,
+)
 from mealieapi.users import Group, User, UserSignup
 
 
