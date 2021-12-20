@@ -116,7 +116,6 @@ class RawClient(_RawClient):
             method="POST",
             data={"username": username, "password": password},  # type: ignore[arg-type]
             use_auth=False,
-
         )
         return Auth(self, **data)
 

@@ -104,6 +104,7 @@ class Group(JsonModel):
         else:
             raise ValueError("Missing required parameter id")
 
+
 @dataclass()
 class UserSignup(JsonModel):
     _client: "MealieClient" = field(repr=False)

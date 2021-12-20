@@ -53,11 +53,15 @@ class RecipeComment(JsonModel):
     user: "User"
 
     def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"text",})
+        return super().json(
+            {
+                "text",
+            }
+        )
 
     async def create(self) -> "RecipeComment":
         return await self._client.create_recipe_comment(self.recipe_slug, self)
-    
+
     async def update(self, text: str) -> "RecipeComment":
         return await self._client.update_recipe_comment(self.recipe_slug, self.id, self)
 

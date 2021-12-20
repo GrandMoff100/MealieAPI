@@ -14,8 +14,8 @@ from mealieapi.recipes import (
     RecipeCategory,
     RecipeComment,
     RecipeImage,
+    RecipeNutrition,
     RecipeTag,
-    RecipeNutrition
 )
 from mealieapi.users import Group, User, UserSignup
 
@@ -165,10 +165,10 @@ class MealieClient(RawClient):
 
     # Recipe Methods
     def process_comment_json(self, data: t.Dict[str, t.Any]) -> RecipeComment:
-        data['date_added'] = datetime.strptime(
-            data['date_added'], YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
+        data["date_added"] = datetime.strptime(
+            data["date_added"], YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
         )
-        data['user'] = self.process_user_json(data['user'])
+        data["user"] = self.process_user_json(data["user"])
         return RecipeComment(self, **data)
 
     def process_nutrition_json(self, data: t.Dict[str, t.Any]) -> RecipeNutrition:
@@ -179,7 +179,9 @@ class MealieClient(RawClient):
         if "org_u_r_l" in data:
             del data["org_u_r_l"]
         if data["comments"]:
-            data["comments"] = [self.process_comment_json(comment) for comment in data["comments"]]
+            data["comments"] = [
+                self.process_comment_json(comment) for comment in data["comments"]
+            ]
         if data["date_added"]:
             data["date_added"] = datetime.strptime(data["date_added"], YEAR_MONTH_DAY)
         if data["date_updated"]:
@@ -323,7 +325,9 @@ class MealieClient(RawClient):
         await self.request(f"categories/{category_slug}", method="DELETE")
 
     # Recipe Comments
-    async def create_recipe_comment(self, recipe_slug: str, comment: RecipeComment) -> RecipeComment:
+    async def create_recipe_comment(
+        self, recipe_slug: str, comment: RecipeComment
+    ) -> RecipeComment:
         data = await self.request(
             f"recipes/{recipe_slug}/comments", method="POST", data=comment.json()  # type: ignore[arg-type]
         )
