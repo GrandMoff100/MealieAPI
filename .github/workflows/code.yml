@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  styling:
+  linting:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Python
@@ -16,7 +16,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install workflow dependencies
-        run: pip install flake8 isort black mypy
+        run: pip install flake8 isort black
       - name: Install Project Dependencies
         run: pip install -e ./
       - name: Run flake8
@@ -27,8 +27,18 @@ jobs:
         run: isort mealieapi --check-only
       - name: Run black 
         run: black mealieapi --check
+  typing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install workflow dependencies
+        run: pip install mypy
+      - name: Install Project Dependencies
+        run: pip install -e ./
       - name: Run mypy
         run: mypy mealieapi
-      
-
-    
