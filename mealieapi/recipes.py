@@ -1,4 +1,3 @@
-import io
 import typing as t
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -28,7 +27,7 @@ class RecipeAsset(JsonModel):
     icon: str = None
 
     async def content(self) -> bytes:
-        return await self.get_asset(recipe_slug, self.file_name)
+        return await self.get_asset(self.recipe_slug, self.file_name)
 
 
 @dataclass()
@@ -111,12 +110,12 @@ class Recipe:
                 "comments",
             }
         )
-
-        data = {attr: getattr(self, attr) for attr in attrs}
         if data["date_added"]:
             data["date_added"] = data["date_added"].strftime(YEAR_MONTH_DAY)
         if data["date_updated"]:
-            data["date_updated"] = data["date_updated"].strftime(YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
+            data["date_updated"] = data["date_updated"].strftime(
+                YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
+            )
         return data
 
     async def create(self) -> "Recipe":
@@ -153,7 +152,7 @@ class Recipe:
 
 
 @dataclass()
-class RecipeTag:
+class RecipeTag(JsonModel):
     _client: "MealieClient" = field(repr=False)
     id: int
     name: str
@@ -163,15 +162,18 @@ class RecipeTag:
     def slug(self):
         return name_to_slug(self.name)
 
-    async def update(self, new_name: str) -> None:
-        tag = await self._client.update_tag
+    def json(self) -> dict:
+        return super().json({"name", "slug"})
+
+    async def update(self, new_name: str) -> "RecipeTag":
+        return await self._client.update_tag(self.id, self)
 
     async def delete(self):
-        pass
+        await self._client.delete_tag(self.id)
 
 
 @dataclass()
-class RecipeCategory:
+class RecipeCategory(JsonModel):
     _client: "MealieClient" = field(repr=False)
     id: int
     name: str
@@ -180,3 +182,6 @@ class RecipeCategory:
     @property
     def slug(self):
         return name_to_slug(self.name)
+
+    def json(self) -> dict:
+        return super().json({"name", "slug"})

@@ -39,10 +39,10 @@ class User(JsonModel):
             }
         )
 
-    async def create(self) -> User:
+    async def create(self) -> "User":
         return await self._client.create_user(self)
 
-    async def update(self) -> User:
+    async def update(self) -> "User":
         return await self._client.update_user(self.id, self)
 
     async def delete(self) -> None:
@@ -83,16 +83,16 @@ class Group(JsonModel):
     webhook_time: t.Union[timedelta, None] = None
     users: t.Union[t.List[User], None] = None
     mealplans: t.Union[t.List[MealPlan], None] = None
-    shoppinglists: t.Union[t.List[ShoppingList], None] = None
+    shopping_lists: t.Union[t.List[ShoppingList], None] = None
     webhook_enable: t.Union[bool, None] = None
 
     def json(self) -> dict:
         return super().json({"name", "webhook_urls", "webhook_enable"})
 
-    async def create(self) -> Group:
+    async def create(self) -> "Group":
         return await self._client.create_group(self)
 
-    async def update(self) -> Group:
+    async def update(self) -> "Group":
         return await self._client.update_group(self.id, self)
 
     async def delete(self) -> None:
