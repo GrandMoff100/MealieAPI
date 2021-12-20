@@ -7,12 +7,12 @@ if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
 
 
-def name_to_slug(name):
+def name_to_slug(name: str) -> str:
     letters = filter(lambda char: char in "qwertyuiopasdfghjklzxcvbnm ", name.lower())
     return "".join(letters).replace(" ", "-")
 
 
-def camel_to_snake_case(obj: JSONObject):
+def camel_to_snake_case(obj: JSONObject) -> JSONObject:
     if isinstance(obj, dict):
         for key, value in list(obj.items()):
             new_key = camel_to_snake_case(key)
@@ -32,8 +32,8 @@ class File:
     _client: "MealieClient"
     file_token: str
 
-    async def download(self):
-        pass
+    async def download(self) -> bytes:
+        return await self._client.download_file(self.file_token)
 
 
 @dataclass()

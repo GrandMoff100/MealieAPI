@@ -8,3 +8,11 @@ class UnauthenticatedError(MealieError):
 
 class BadRequestError(MealieError):
     pass
+
+
+class ParameterMissingError(MealieError):
+    pass
+
+
+class UserError(MealieError):
+    pass

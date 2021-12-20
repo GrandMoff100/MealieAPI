@@ -5,7 +5,6 @@ from datetime import timedelta
 
 from mealieapi.auth import Token
 from mealieapi.meals import MealPlan, ShoppingList
-from mealieapi.recipes import Recipe
 from mealieapi.mixins import JsonModel
 from mealieapi.recipes import Recipe, RecipeCategory
 
@@ -56,11 +55,11 @@ class User(JsonModel):
         if self.password:
             await self._client.update_password(self.id, self.password, new_password)
         else:
-            raise ValueError('Missing password attribute, required to change password.')
+            raise ValueError("Missing password attribute, required to change password.")
 
     async def favorites(self) -> t.List[Recipe]:
         return await self._client.get_favorites(self.id)
-    
+
     async def add_favorite(self, recipe_slug: str) -> None:
         await self._client.add_favorite(self.id, recipe_slug)
 

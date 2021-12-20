@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from zipfile import ZipFile
 
-from mealieapi.const import DATE_ADDED_FORMAT, DATE_UPDATED_FORMAT
+from mealieapi.const import YEAR_MONTH_DAY, YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
 from mealieapi.misc import name_to_slug
 from mealieapi.mixins import JsonModel
 
@@ -114,9 +114,9 @@ class Recipe:
 
         data = {attr: getattr(self, attr) for attr in attrs}
         if data["date_added"]:
-            data["date_added"] = data["date_added"].strftime(DATE_ADDED_FORMAT)
+            data["date_added"] = data["date_added"].strftime(YEAR_MONTH_DAY)
         if data["date_updated"]:
-            data["date_updated"] = data["date_updated"].strftime(DATE_UPDATED_FORMAT)
+            data["date_updated"] = data["date_updated"].strftime(YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
         return data
 
     async def create(self) -> "Recipe":

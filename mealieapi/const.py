@@ -1,4 +1,4 @@
 "Module for constants"
 
-DATE_ADDED_FORMAT = "%Y-%m-%d"
-DATE_UPDATED_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
+YEAR_MONTH_DAY = "%Y-%m-%d"
+YEAR_MONTH_DAY_HOUR_MINUTE_SECOND = "%Y-%m-%dT%H:%M:%S.%f"
