@@ -14,9 +14,6 @@ main.py
 
 # Repl.it
 .replit
-pyproject.toml
-poetry.lock
-dev.py
 .breakpoints
 
 # Distribution / packaging

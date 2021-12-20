@@ -1,0 +1,31 @@
+[mypy]
+show_error_codes = True
+
+[tool.isort]
+profile = black
+
+[tool.poetry]
+name = "MealieAPI"
+version = "0.0.0"
+description = "Control your Mealie instance with python!"
+authors = ["GrandMoff100 <nlarsen23.student@gmail.com>"]
+maintainers = ["GrandMoff100 <nlarsen23.student@gmail.com>"]
+readme = "README.md"
+homepage = "https://github.com/GrandMoff100/MealieAPI"
+repository = "https://github.com/GrandMoff100/MealieAPI"
+documentation = "https://github.com/GrandMoff100/MealieAPI/tree/master/README.md"
+license = "GPLv3"
+packages = [
+    { include = "mealieapi" }
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.8"
+aiohttp = "^3.8.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
