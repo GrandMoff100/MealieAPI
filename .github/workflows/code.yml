@@ -16,7 +16,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install workflow dependencies
-        run: pip install flake8 black isort poetry
+        run: pip install poetry
       - name: Install Project Dependencies
         run: poetry install
       - name: Run flake8
@@ -37,8 +37,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install workflow dependencies
-        run: pip install mypy poetry
+        run: pip install poetry
       - name: Install Project Dependencies
-        run: poetry install
+        run: poetry install --no-root
       - name: Run mypy
         run: mypy mealieapi
