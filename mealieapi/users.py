@@ -25,7 +25,7 @@ class User(JsonModel):
     tokens: t.Union[t.List[Token], None] = None
     password: t.Union[str, None] = None
 
-    def json(self) -> dict:
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json(
             {
                 "username",
@@ -57,7 +57,7 @@ class User(JsonModel):
         else:
             raise ValueError("Missing password attribute, required to change password.")
 
-    async def favorites(self) -> t.List[Recipe]:
+    async def favorites(self) -> t.Optional[t.List[Recipe]]:
         return await self._client.get_favorites(self.id)
 
     async def add_favorite(self, recipe_slug: str) -> None:
@@ -67,7 +67,7 @@ class User(JsonModel):
         await self._client.remove_favorite(self.id, recipe_slug)
 
     async def image(self) -> bytes:
-        return self._client.get_user_image(self.id)
+        return await self._client.get_user_image(self.id)
 
     async def update_image(self, image: io.BytesIO) -> bytes:
         return await self._client.update_user_image(self.id, image)
@@ -86,18 +86,23 @@ class Group(JsonModel):
     shopping_lists: t.Union[t.List[ShoppingList], None] = None
     webhook_enable: t.Union[bool, None] = None
 
-    def json(self) -> dict:
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json({"name", "webhook_urls", "webhook_enable"})
 
     async def create(self) -> "Group":
         return await self._client.create_group(self)
 
     async def update(self) -> "Group":
-        return await self._client.update_group(self.id, self)
+        if self.id is not None:
+            return await self._client.update_group(self.id, self)
+        else:
+            raise ValueError("Missing required parameter id")
 
     async def delete(self) -> None:
-        return await self._client.delete_group(self.id)
-
+        if self.id is not None:
+            await self._client.delete_group(self.id)
+        else:
+            raise ValueError("Missing required parameter id")
 
 @dataclass()
 class UserSignup(JsonModel):
@@ -106,7 +111,7 @@ class UserSignup(JsonModel):
     admin: bool
     token: t.Union[str, None] = None
 
-    def json(self) -> dict:
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json({"name", "admin"})
 
     async def delete(self) -> None:
@@ -114,6 +119,6 @@ class UserSignup(JsonModel):
 
     async def signup(self, user: User) -> User:
         if self.token:
-            await self._client.signup_with_token(self.token, user)
+            return await self._client.signup_with_token(self.token, user)
         else:
             raise ValueError("Tried to signup user without signup token")

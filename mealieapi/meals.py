@@ -20,7 +20,7 @@ class Meal(JsonModel):
     def slug(self):
         return name_to_slug(self.name)
 
-    def json(self) -> dict:
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json({"name", "slug", "description"})
 
     async def get_recipe(self):
@@ -33,7 +33,7 @@ class MealPlanDay(JsonModel):
     date: datetime
     meals: t.List[Meal]
 
-    def json(self) -> dict:
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         data = super().json({"date", "meals"})
         data["date"] = data["date"].strftime(YEAR_MONTH_DAY)
         return data
@@ -49,7 +49,7 @@ class MealPlan(JsonModel):
     id: t.Union[int, None] = None
     shopping_list: t.Union[int, None] = None
 
-    def json(self) -> dict:
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         data = super().json({"group", "end_date", "start_date", "meals"})
         data["end_date"] = data["end_date"].strftime(YEAR_MONTH_DAY)
         data["start_date"] = data["start_date"].strftime(YEAR_MONTH_DAY)
@@ -64,7 +64,7 @@ class Ingredient(JsonModel):
     quantity: int
     checked: bool
 
-    def json(self):
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json({"title", "text", "quantity", "checked"})
 
 
@@ -76,21 +76,27 @@ class ShoppingList(JsonModel):
     items: t.List[Ingredient]
     id: t.Union[int, None] = None
 
-    def json(self):
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json({"name", "groups", "items"})
 
-    def toggle_checked(self, index: int) -> "ShoppingList":
+    async def toggle_checked(self, index: int) -> "ShoppingList":
         self.items[index].checked = not self.items[index].checked
-        await self.update()
+        return await self.update()
 
     def length(self):
         return len(self.items)
 
-    def create(self) -> "ShoppingList":
+    async def create(self) -> "ShoppingList":
         return await self._client.create_shopping_list(self)
 
-    def update(self) -> "ShoppingList":
-        return await self._client.update_shopping_list(self.id, self)
+    async def update(self) -> "ShoppingList":
+        if self.id is not None:
+            return await self._client.update_shopping_list(self.id, self)
+        else:
+            raise ValueError("Missing required attribute id")
 
-    def delete(self) -> None:
-        await self._client.delete_shopping_list(self.id)
+    async def delete(self) -> None:
+        if self.id is not None:
+            await self._client.delete_shopping_list(self.id)
+        else:
+            raise ValueError("Missing required attribute id")
