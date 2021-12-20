@@ -8,9 +8,9 @@ class JsonModel:
             value = getattr(self, attr)
             if value:
                 if isinstance(value, JsonModel):
-                    data[attr] = value.json()  # type: ignore
+                    data[attr] = value.json()  # type: ignore[call-arg]
                 elif isinstance(value, list):
-                    data[attr] = [
+                    data[attr] = [  # type: ignore[assignment]
                         element if not isinstance(value, JsonModel) else element.json()
                         for element in value
                     ]

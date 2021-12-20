@@ -2,7 +2,6 @@ import re
 import typing as t
 from dataclasses import dataclass
 
-JSONObject = t.Union[list, t.Union[dict, str]]
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
 
@@ -12,7 +11,7 @@ def name_to_slug(name: str) -> str:
     return "".join(letters).replace(" ", "-")
 
 
-def camel_to_snake_case(obj: JSONObject) -> JSONObject:
+def camel_to_snake_case(obj):
     if isinstance(obj, dict):
         for key, value in list(obj.items()):
             new_key = camel_to_snake_case(key)
@@ -38,27 +37,27 @@ class File:
 
 @dataclass()
 class DebugInfo:
-    production: bool = None
-    version: str = None
-    demo_status: bool = None
-    api_port: int = None
-    api_docs: bool = None
-    db_type: str = None
-    db_url: str = None
-    default_group: str = None
+    production: t.Optional[bool] = None
+    version: t.Optional[str] = None
+    demo_status: t.Optional[bool] = None
+    api_port: t.Optional[int] = None
+    api_docs: t.Optional[bool] = None
+    db_type: t.Optional[str] = None
+    db_url: t.Optional[str] = None
+    default_group: t.Optional[str] = None
 
 
 @dataclass()
 class DebugStatistics:
-    total_recipes: int = None
-    total_users: int = None
-    total_groups: int = None
-    uncategorized_recipes: int = None
-    untagged_recipes: int = None
+    total_recipes: t.Optional[int] = None
+    total_users: t.Optional[int] = None
+    total_groups: t.Optional[int] = None
+    uncategorized_recipes: t.Optional[int] = None
+    untagged_recipes: t.Optional[int] = None
 
 
 @dataclass()
 class DebugVersion:
-    production: bool = None
-    version: str = None
-    demo_status: bool = None
+    production: t.Optional[bool] = None
+    version: t.Optional[str] = None
+    demo_status: t.Optional[bool] = None

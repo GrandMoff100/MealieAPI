@@ -5,11 +5,13 @@ import typing as t
 import aiohttp
 
 from mealieapi.auth import Auth
+from mealieapi.errors import MealieError
 from mealieapi.misc import camel_to_snake_case
 
 
 class _RawClient:
-    response_processors = {}
+    auth: t.Optional[Auth] = None
+    response_processors: t.Dict[str, t.Callable] = {}
 
     def __init__(self, url: str) -> None:
         self.url = url
@@ -32,7 +34,7 @@ class _RawClient:
         params: t.Union[dict, None] = None,
         use_auth: bool = True,
         **kwargs,
-    ) -> t.Union[bytes, dict]:
+    ) -> t.Any:
         headers = self._headers()
         if use_auth is False and self.auth is not None:
             del headers[aiohttp.hdrs.AUTHORIZATION]
@@ -67,7 +69,10 @@ class _RawClient:
                 return await response.read()
 
             content_type = response.headers.get(aiohttp.hdrs.CONTENT_TYPE)
-            processor = self.response_processors.get(content_type, default_handler)
+            if content_type is not None:
+                processor = self.response_processors.get(content_type, default_handler)
+            else:
+                raise MealieError("Mealie did not return a content-type header.")
             return await processor(response)
         elif 400 <= response.status < 500:
             # TODO: Create Error handling system for json error responses
@@ -88,14 +93,13 @@ async def process_json(response: aiohttp.ClientResponse) -> t.Union[dict, str]:
 
 
 @_RawClient.response_processor("application/octet-stream")
-async def process_stream(response: aiohttp.ClientResponse):
+async def process_stream(response: aiohttp.ClientResponse) -> bytes:
     return await response.read()
 
 
 class RawClient(_RawClient):
-    def __init__(self, url, auth: t.Union[Auth, None] = None) -> None:
+    def __init__(self, url) -> None:
         super().__init__(url)
-        self.auth = auth
 
     # Authorization
     def _headers(self) -> dict:
@@ -110,7 +114,7 @@ class RawClient(_RawClient):
         data = await self.request(
             "auth/token",
             method="POST",
-            data={"username": username, "password": password},
+            data={"username": username, "password": password},  # type: ignore[arg-type]
             use_auth=False,
         )
         return Auth(self, **data)
