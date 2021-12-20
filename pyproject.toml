@@ -1,8 +1,8 @@
 [mypy]
-show_error_codes = True
+show_error_codes = true
 
 [tool.isort]
-profile = black
+profile = "black"
 
 [tool.poetry]
 name = "MealieAPI"
