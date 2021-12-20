@@ -16,9 +16,9 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install workflow dependencies
-        run: pip install flake8 isort black
+        run: pip install flake8 black isort poetry
       - name: Install Project Dependencies
-        run: pip install -e ./
+        run: poetry install
       - name: Run flake8
         uses: suo/flake8-github-action@releases/v1
         env:
@@ -37,8 +37,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install workflow dependencies
-        run: pip install mypy
+        run: pip install mypy poetry
       - name: Install Project Dependencies
-        run: pip install -e ./
+        run: poetry install
       - name: Run mypy
         run: mypy mealieapi
