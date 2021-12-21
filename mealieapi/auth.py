@@ -13,12 +13,12 @@ if t.TYPE_CHECKING:
 @dataclass()
 class Token(JsonModel):
     _client: "MealieClient" = field(repr=False)
-    name: str
-    id: int
-    token: t.Union[str, None] = None
+    name: t.Optional[str] = None
+    id: t.Optional[int] = None
+    token: t.Optional[str] = None
 
     def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"name", "id"})
+        return super().json({"name",})
 
     async def delete(self) -> None:
         await self._client.delete_api_key(self.id)

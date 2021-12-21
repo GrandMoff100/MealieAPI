@@ -59,10 +59,6 @@ class MealieClient(RawClient):
 
     # Users
     def process_user_json(self, data: t.Dict[str, t.Any]) -> User:
-        if data.get("favorite_recipes"):
-            data["favorite_recipes"] = [
-                self.process_recipe_json(recipe) for recipe in data["favorite_recipes"]
-            ]
         if data.get("tokens"):
             data["tokens"] = [
                 self.process_token_json(token_data) for token_data in data["tokens"]
