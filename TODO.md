@@ -25,4 +25,4 @@ What needs to be done so far before Version 0.0.1?
 
 ## Maintenance
 - [ ] Add examples to README in `examples/`
-- [ ] Add Test Suite to test endpoints
+- [X] Add Test Suite to test endpoints

@@ -59,5 +59,7 @@ jobs:
       - name: Install Project Dependencies
         run: poetry install --no-dev
       - name: Run Tests
-        run: pytest -v tests
+        run: |
+          export PYTHONPATH="$PWD"
+          poetry run pytest -v tests
           
