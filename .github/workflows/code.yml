@@ -53,9 +53,9 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install workflow dependencies
-        run: pip install poetry
+        run: pip install pytest
       - name: Install Project Dependencies
-        run: poetry install --no-root
+        run: poetry install --no-dev
       - name: Run Tests
-        run: poetry run pytest -v tests
+        run: pytest -v tests
           
