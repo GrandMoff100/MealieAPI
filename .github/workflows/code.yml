@@ -2,9 +2,13 @@ name: Code Styling
 
 on:
   pull_request:
+    paths: 
+      - mealieapi/**
   push:
     branches:
       - master
+    paths:
+      - mealieapi/**
   workflow_dispatch:
 
 jobs:
