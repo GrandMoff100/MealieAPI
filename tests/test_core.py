@@ -170,6 +170,12 @@ class TestCreateRecipe:
     def test_get_recipes(self):
         pass
 
+    def test_get_uncategorized_recipes(self):
+        pass
+
+    def test_get_untagged_recipes(self):
+        pass
+
     def test_upload_recipe_asset(self):
         pass
 
@@ -185,6 +191,9 @@ class TestCreateRecipe:
     def test_add_favorite(self):
         pass
 
+    def test_get_favorites(self):
+        pass
+
     def test_get_recipe_zip(self):
         pass
 
@@ -194,29 +203,57 @@ class TestCreateRecipe:
     def test_delete_recipe(self):
         pass
 
+class TestMealplans:
+    def test_create_group(self):
+        pass
 
-##### Method Bank
-# create_group
-# create_mealplan
+    def test_create_mealplan(self):
+        pass
 
-# create_shopping_list
-# delete_mealplan
-# delete_shopping_list
+    def test_get_mealplan(self):
+        pass
 
-# get_favorites
-# get_mealplan
-# get_mealplan_shopping_list
-# get_mealplan_this_week
-# get_mealplans_all
+    def test_update_mealplan(self):
+        pass
 
-# get_shopping_list
-# get_todays_meal
-# get_todays_meal_image
-# get_uncategorized_recipes
-# get_untagged_recipes
-# update_recipe
-# update_recipe_image
-# update_recipe_image_from_url
-# update_shopping_list
-# update_mealplan
+    def test_get_mealplans_all(self):
+        pass
+
+    def test_get_mealplan_this_week(self):
+        pass
+
+    def test_get_todays_meal(self):
+        pass
+
+    def test_get_todays_meal_image(self):
+        pass
+
+    def test_update_recipe_image(self):
+        pass
+
+    def test_update_recipe_image_from_url(self):
+        pass
+
+    def test_get_mealplan_shopping_list(self):
+        pass
+
+    def test_delete_mealplan(self):
+        pass
+
+    def test_delete_group(self):
+        pass
+
+
+class TestShoppingList:
+    def test_create_shopping_list(self):
+        pass
+
+    def test_get_shopping_list(self):
+        pass
+
+    def test_update_shopping_list(self):
+        pass
+
+    def test_delete_shopping_list(self):
+        pass
 
