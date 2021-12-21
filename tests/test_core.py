@@ -12,9 +12,6 @@ KEY_NAME = 'MealieAPI Test Suite Key'
 
 
 class TestAuth:
-    token: t.Optional[Token] = None
-    user: t.Optional[User] = None
-
     async def test_login(self):
         await CLIENT.login(USER, PASSW)
 
