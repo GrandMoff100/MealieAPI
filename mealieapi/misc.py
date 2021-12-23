@@ -1,14 +1,14 @@
 import re
 import typing as t
-from dataclasses import dataclass
+from slugify import slugify
+from dataclasses import dataclass, field
 
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
 
 
 def name_to_slug(name: str) -> str:
-    letters = filter(lambda char: char in "qwertyuiopasdfghjklzxcvbnm ", name.lower())
-    return "".join(letters).replace(" ", "-")
+    return slugify(name)
 
 
 def camel_to_snake_case(obj):
@@ -17,7 +17,7 @@ def camel_to_snake_case(obj):
             new_key = camel_to_snake_case(key)
             del obj[key]
             obj[new_key] = value
-            if isinstance(value, dict):
+            if isinstance(value, dict) or isinstance(value, list):
                 obj[new_key] = camel_to_snake_case(value)
         return obj
     elif isinstance(obj, list):
@@ -28,7 +28,7 @@ def camel_to_snake_case(obj):
 
 @dataclass()
 class File:
-    _client: "MealieClient"
+    _client: "MealieClient" = field(repr=False, compare=False)
     file_token: str
 
     async def download(self) -> bytes:

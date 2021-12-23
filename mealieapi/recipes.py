@@ -1,3 +1,4 @@
+import io
 import typing as t
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -14,14 +15,14 @@ if t.TYPE_CHECKING:
 
 @dataclass()
 class RecipeImage(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     recipe_slug: str
     image: int
 
 
 @dataclass()
 class RecipeAsset(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     recipe_slug: str
     file_name: str
     name: t.Optional[str] = None
@@ -44,7 +45,7 @@ class RecipeNutrition:
 
 @dataclass()
 class RecipeComment(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     recipe_slug: str
     text: str
     id: int
@@ -71,7 +72,7 @@ class RecipeComment(JsonModel):
 
 @dataclass(repr=False)
 class Recipe(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     name: str
     description: t.Optional[str] = None
     image: t.Optional[str] = None
@@ -155,6 +156,19 @@ class Recipe(JsonModel):
             return await self._client.get_image(self.slug, type)
         return None
 
+    async def upload_asset(
+        self, name: str, icon: str, content: bytes, extension: str
+    ) -> RecipeAsset:
+        return await self._client.upload_recipe_asset(
+            self.slug, name, icon, extension, content
+        )
+
+    async def upload_image(self, image: io.BytesIO, extension: str) -> RecipeImage:
+        return await self._client.update_recipe_image(self.slug, image, extension)
+
+    async def upload_image_from_url(self, url: str) -> None:
+        await self._client.update_recipe_image_from_url(self.slug, url)
+
     async def push_changes(self) -> "Recipe":
         return await self._client.update_recipe(self)
 
@@ -163,7 +177,7 @@ class Recipe(JsonModel):
 
     async def refresh(self) -> None:
         recipe = await self._client.get_recipe(self.slug)
-        for attr in dir(recipe):
+        for attr in self.__dataclass_fields__:
             if not attr.startswith("_"):
                 setattr(self, attr, getattr(recipe, attr))
 
@@ -173,7 +187,7 @@ class Recipe(JsonModel):
 
 @dataclass()
 class RecipeTag(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     id: int
     name: str
     recipes: t.Optional[t.List[Recipe]] = None
@@ -194,7 +208,7 @@ class RecipeTag(JsonModel):
 
 @dataclass()
 class RecipeCategory(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     id: int
     name: str
     recipes: t.Optional[t.List[Recipe]] = None

@@ -12,7 +12,7 @@ if t.TYPE_CHECKING:
 
 @dataclass()
 class Meal(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     name: str
     description: str
 
@@ -29,7 +29,7 @@ class Meal(JsonModel):
 
 @dataclass()
 class MealPlanDay(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     date: datetime
     meals: t.List[Meal]
 
@@ -41,7 +41,7 @@ class MealPlanDay(JsonModel):
 
 @dataclass()
 class MealPlan(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     group: str
     end_date: datetime
     start_date: datetime
@@ -58,7 +58,7 @@ class MealPlan(JsonModel):
 
 @dataclass()
 class Ingredient(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     title: str
     text: str
     quantity: int
@@ -70,7 +70,7 @@ class Ingredient(JsonModel):
 
 @dataclass()
 class ShoppingList(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     name: str
     group: str
     items: t.List[Ingredient]

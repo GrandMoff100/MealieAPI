@@ -18,15 +18,31 @@ class Token(JsonModel):
     token: t.Optional[str] = None
 
     def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"name",})
+        return super().json(
+            {
+                "name",
+            }
+        )
 
     async def delete(self) -> None:
-        await self._client.delete_api_key(self.id)
+        if self.id is not None:
+            await self._client.delete_api_key(self.id)
+        else:
+            raise ValueError('Token.id must not be None')
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Token):
+            checks = ["name", "id", "token"]
+            for check in checks:
+                if getattr(self, check) != getattr(other, check):
+                    return False
+            return True
+        return False
 
 
 @dataclass()
 class Auth:
-    _client: "RawClient" = field(repr=False)
+    _client: "RawClient" = field(repr=False, compare=False)
     access_token: str
     token_type: t.Optional[str] = None
 

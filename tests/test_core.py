@@ -1,14 +1,15 @@
 import typing as t
+from pathlib import Path
+
 from mealieapi import MealieClient
 from mealieapi.auth import Token
 from mealieapi.users import User
-
 
 URL = "https://demo.mealie.io"
 USER = "changeme@email.com"
 PASSW = "demo"
 CLIENT = MealieClient(URL)
-KEY_NAME = 'MealieAPI Test Suite Key'
+KEY_NAME = "MealieAPI Test Suite Key"
 
 
 class TestAuth:
@@ -25,7 +26,7 @@ class TestAuth:
     async def test_get_user_tokens_and_clean_up(self):
         user = await CLIENT.get_current_user()
         assert True in [token.name == KEY_NAME for token in user.tokens]
-        
+
         for token in user.tokens:
             if token.name == KEY_NAME:
                 break
@@ -164,28 +165,24 @@ class TestTagsAndCategories:
 
 class TestCreateRecipe:
     async def test_create_recipe_from_url(self):
-        pass
+        URL = "https://www.allrecipes.com/recipe/229107/mud-pudding-cones/"
+        recipe = await CLIENT.create_recipe_from_url(URL)
+        recipes = await CLIENT.get_recipes()
+        uncategorized_recipes = await CLIENT.get_uncategorized_recipes()
+        untagged_recipes = await CLIENT.get_untagged_recipes()
 
-    async def test_get_recipe(self):
-        pass
+        assert recipe.slug in map(lambda x: x.slug, recipes)
+        assert recipe.slug in map(lambda x: x.slug, untagged_recipes)
+        assert recipe.slug in map(lambda x: x.slug, uncategorized_recipes)
 
-    async def test_get_recipes(self):
-        pass
+        with open(Path(Path(__file__).parent, "data/test_recipe_asset.txt"), "rb") as f:
+            content = f.read()
+            asset = await recipe.upload_asset(
+                "test_asset", "mdi:file-document-outline", content, "txt"
+            )
 
-    async def test_get_uncategorized_recipes(self):
-        pass
-
-    async def test_get_untagged_recipes(self):
-        pass
-
-    async def test_upload_recipe_asset(self):
-        pass
-
-    async def test_get_asset(self):
-        pass
-
-    async def test_delete_recipe(self):
-        pass
+        assert content == await asset.content()
+        await recipe.delete()
 
     async def test_create_recipe_from_zip(self):
         pass
@@ -204,6 +201,7 @@ class TestCreateRecipe:
 
     async def test_delete_recipe(self):
         pass
+
 
 class TestMealplans:
     async def test_create_group(self):
@@ -258,4 +256,3 @@ class TestShoppingList:
 
     async def test_delete_shopping_list(self):
         pass
-

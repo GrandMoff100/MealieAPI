@@ -68,11 +68,10 @@ class _RawClient:
             async def default_handler(response: aiohttp.ClientResponse) -> bytes:
                 return await response.read()
 
-            content_type = response.headers.get(aiohttp.hdrs.CONTENT_TYPE)
-            if content_type is not None:
-                processor = self.response_processors.get(content_type, default_handler)
-            else:
-                raise MealieError("Mealie did not return a content-type header.")
+            content_type = response.headers.get(
+                aiohttp.hdrs.CONTENT_TYPE, "application/octet-stream"
+            )
+            processor = self.response_processors.get(content_type, default_handler)
             return await processor(response)
         elif 400 <= response.status < 500:
             # TODO: Create Error handling system for json error responses

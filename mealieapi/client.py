@@ -149,15 +149,15 @@ class MealieClient(RawClient):
         data = await self.request(
             "recipes/summary", params={"start": start, "limit": limit}
         )
-        return [Recipe(self, **data) for data in data]
+        return [self.process_recipe_json(data) for data in data]
 
     async def get_untagged_recipes(self) -> t.List[Recipe]:
         data = await self.request("recipes/summary/untagged")
-        return [Recipe(self, **recipe) for recipe in data]
+        return [self.process_recipe_json(recipe) for recipe in data]
 
     async def get_uncategorized_recipes(self) -> t.List[Recipe]:
         data = await self.request("recipes/summary/uncategorized")
-        return [Recipe(self, **recipe) for recipe in data]
+        return [self.process_recipe_json(recipe) for recipe in data]
 
     # Recipe Methods
     def process_comment_json(self, data: t.Dict[str, t.Any]) -> RecipeComment:
@@ -170,20 +170,27 @@ class MealieClient(RawClient):
     def process_nutrition_json(self, data: t.Dict[str, t.Any]) -> RecipeNutrition:
         return RecipeNutrition(**data)
 
+    def process_asset_json(self, recipe_slug: str, data: dict):
+        return RecipeAsset(self, recipe_slug, **data)
+
     def process_recipe_json(self, data: t.Dict[str, t.Any]) -> Recipe:
         data["org_url"] = data.get("org_u_r_l")
-        if "org_u_r_l" in data:
+        if data.get("org_u_r_l"):
             del data["org_u_r_l"]
-        if data["comments"]:
+        if data.get("comments"):
             data["comments"] = [
                 self.process_comment_json(comment) for comment in data["comments"]
             ]
-        if data["date_added"]:
+        if data.get("date_added"):
             data["date_added"] = datetime.strptime(data["date_added"], YEAR_MONTH_DAY)
-        if data["date_updated"]:
+        if data.get("date_updated"):
             data["date_updated"] = datetime.strptime(
                 data["date_updated"], YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
             )
+        if data.get("assets"):
+            data["assets"] = [
+                self.process_asset_json(data["slug"], asset) for asset in data["assets"]
+            ]
         del data["slug"]
         return Recipe(self, **data)
 
@@ -239,11 +246,11 @@ class MealieClient(RawClient):
         )
 
     async def upload_recipe_asset(
-        self, recipe_slug: str, name: str, icon: str, extension: str, file: io.BytesIO
+        self, recipe_slug: str, name: str, icon: str, extension: str, content: bytes
     ) -> RecipeAsset:
         data = await self.request(
             f"recipes/{recipe_slug}/assets",
-            data=dict(name=name, icon=icon, extension=extension, file=file),  # type: ignore[arg-type]
+            data=dict(name=name, icon=icon, extension=extension, file=io.BytesIO(content)),  # type: ignore[arg-type]
             method="POST",
         )
         return RecipeAsset(self, recipe_slug, **data)
@@ -430,7 +437,7 @@ class MealieClient(RawClient):
     async def get_image(self, recipe_slug: str, type="original") -> bytes:
         """
         Gets the image for the recipe.
-        Valid types are :code:`original`, :code:`min-original`, and :code:`tiny-original`
+        Valid types are :code:`original` for Original Size, :code:`min-original` for Small Size, and :code:`tiny-original` for Tiny Size
         """
         return await self.request(f"media/recipes/{recipe_slug}/images/{type}.webp")  # type: ignore[arg-type]
 

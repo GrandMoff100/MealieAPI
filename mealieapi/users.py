@@ -14,7 +14,7 @@ if t.TYPE_CHECKING:
 
 @dataclass()
 class User(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     username: str
     full_name: str
     email: str
@@ -75,7 +75,7 @@ class User(JsonModel):
 
 @dataclass()
 class Group(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     name: str
     id: t.Union[int, None] = None
     categories: t.Union[t.List[RecipeCategory], None] = None
@@ -107,7 +107,7 @@ class Group(JsonModel):
 
 @dataclass()
 class UserSignup(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+    _client: "MealieClient" = field(repr=False, compare=False)
     name: str
     admin: bool
     token: t.Union[str, None] = None

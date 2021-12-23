@@ -21,6 +21,7 @@ packages = [
 python = "^3.8"
 aiohttp = "^3.8.1"
 pytest-aiohttp = "^0.3.0"
+python-slugify = "^5.0.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"

@@ -1,0 +1,5 @@
+TEST RECIPE ASSET
+--------------------
+
+
+Not a real asset. Only for test suite purposes.
