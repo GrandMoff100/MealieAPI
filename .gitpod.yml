@@ -1,4 +1,5 @@
 tasks:
   - init: pip install poetry
-  - init: poetry env use system
-  - init: poetry install
+  - init: pip install -e .
+  - init: python -m poetry install
+  - command: python -m poetry shell

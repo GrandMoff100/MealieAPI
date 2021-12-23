@@ -64,6 +64,6 @@ jobs:
         run: poetry install
       - name: Run Tests
         run: |
-          export PYTHONPATH="$PWD"
+          pip install .
           poetry run pytest -v tests
           
