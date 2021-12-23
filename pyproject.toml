@@ -3,7 +3,7 @@ profile = "black"
 
 [tool.poetry]
 name = "MealieAPI"
-version = "0.0.0"
+version = "0.0.0b"
 description = "Control your Mealie instance with python!"
 authors = ["GrandMoff100 <nlarsen23.student@gmail.com>"]
 maintainers = ["GrandMoff100 <nlarsen23.student@gmail.com>"]
@@ -18,7 +18,7 @@ packages = [
 
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 aiohttp = "^3.8.1"
 
 [tool.poetry.dev-dependencies]
