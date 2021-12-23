@@ -11,7 +11,7 @@ readme = "README.md"
 homepage = "https://github.com/GrandMoff100/MealieAPI"
 repository = "https://github.com/GrandMoff100/MealieAPI"
 documentation = "https://github.com/GrandMoff100/MealieAPI/tree/master/README.md"
-license = "GPLv3"
+license = "GPL-3.0-or-later"
 packages = [
     { include = "mealieapi" }
 ]
