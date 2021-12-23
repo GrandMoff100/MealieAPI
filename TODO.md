@@ -10,7 +10,7 @@ What needs to be done so far before Version 0.0.0?
 ## Maintainence
 - [X] Setup Type Checking CI/CD Workflow
 - [X] Setup Linting CI/CD Workflow
-- [ ] Structure and Fill README
+- [X] Structure and Fill README
 - [X] Config pyproject.toml
 
 # Version 0.0.1
