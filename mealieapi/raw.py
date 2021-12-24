@@ -97,7 +97,9 @@ class _RawClient:
                 if error["type"] == "value_error.missing":
                     params = error["loc"]
                     msg = error["msg"]
-                    raise ParameterMissingError(f"Missing the parameters {params!r}, {msg}")
+                    raise ParameterMissingError(
+                        f"Missing the parameters {params!r}, {msg}"
+                    )
 
 
 @_RawClient.response_processor("application/json")
