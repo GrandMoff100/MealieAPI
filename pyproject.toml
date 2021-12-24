@@ -3,7 +3,7 @@ profile = "black"
 
 [tool.poetry]
 name = "MealieAPI"
-version = "0.0.0b"
+version = "0.0.0"
 description = "Control your Mealie instance with python!"
 authors = ["GrandMoff100 <nlarsen23.student@gmail.com>"]
 maintainers = ["GrandMoff100 <nlarsen23.student@gmail.com>"]
