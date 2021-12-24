@@ -8,9 +8,9 @@ from mealieapi.auth import Auth
 from mealieapi.errors import (
     BadRequestError,
     InternalServerError,
+    MealieError,
     ParameterMissingError,
     UnauthenticatedError,
-    MealieError
 )
 from mealieapi.misc import camel_to_snake_case
 
