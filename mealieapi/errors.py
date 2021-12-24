@@ -14,5 +14,5 @@ class ParameterMissingError(MealieError):
     pass
 
 
-class UserError(MealieError):
+class InternalServerError(MealieError):
     pass

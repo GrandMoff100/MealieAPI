@@ -6,6 +6,7 @@ What needs to be done so far before Version 0.0.0?
 - [X] Fix linting errors
 - [X] Implement User and user Group
 - [X] Implement MealPlan and ShoppingList
+- [X] Add Error Handling
 
 ## Maintainence
 - [X] Setup Type Checking CI/CD Workflow

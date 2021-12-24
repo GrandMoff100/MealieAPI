@@ -5,7 +5,12 @@ import typing as t
 import aiohttp
 
 from mealieapi.auth import Auth
-from mealieapi.errors import MealieError
+from mealieapi.errors import (
+    InternalServerError,
+    BadRequestError,
+    UnauthenticatedError,
+    ParameterMissingError,
+)
 from mealieapi.misc import camel_to_snake_case
 
 
@@ -75,13 +80,23 @@ class _RawClient:
                 raise MealieError("Mealie did not return a content-type header.")
             return await processor(response)
         elif 400 <= response.status < 500:
-            # TODO: Create Error handling system for json error responses
-            raise ValueError(f"Status Code {response.status}: {await response.json()}")
+            await self.handle_error_json(await response.json())
         else:
-            raise ValueError("Internal Server Error")
+            raise InternalServerError("Mealie had a problem with your request.")
 
     async def handle_error_json(self, data: dict):
-        pass
+        if detail := data.get("detail", "Bad Request") == "Not authenticated":
+            raise UnauthenticatedError("Not authenticated with Mealie")
+        elif detail == "Bad Request":
+            raise BadRequestError("Error with your request.")
+        elif detail == "Internal Server Error":
+            raise InternalServerError()
+        elif isinstance(detail, list):
+            for error in detail:
+                if error["type"] == "value_error.missing":
+                    params = error["loc"]
+                    msg = error["msg"]
+                    raise ParameterMissingError(f"Missing the parameters {params!r}, {msg}")
 
 
 @_RawClient.response_processor("application/json")
