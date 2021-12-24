@@ -6,10 +6,11 @@ import aiohttp
 
 from mealieapi.auth import Auth
 from mealieapi.errors import (
-    InternalServerError,
     BadRequestError,
-    UnauthenticatedError,
+    InternalServerError,
     ParameterMissingError,
+    UnauthenticatedError,
+    MealieError
 )
 from mealieapi.misc import camel_to_snake_case
 
