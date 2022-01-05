@@ -9,6 +9,7 @@ from mealieapi.mixins import JsonModel
 
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
+    from mealieapi.users import User
 
 
 @dataclass()
@@ -23,65 +24,83 @@ class RecipeAsset(JsonModel):
     _client: "MealieClient" = field(repr=False)
     recipe_slug: str
     file_name: str
-    name: str = None
-    icon: str = None
+    name: t.Optional[str] = None
+    icon: t.Optional[str] = None
 
     async def content(self) -> bytes:
-        return await self.get_asset(self.recipe_slug, self.file_name)
+        return await self._client.get_asset(self.recipe_slug, self.file_name)
+
+
+@dataclass()
+class RecipeNutrition:
+    calories: t.Optional[float] = None
+    fatContent: t.Optional[float] = None
+    proteinContent: t.Optional[float] = None
+    carbohydrateContent: t.Optional[float] = None
+    fiberContent: t.Optional[float] = None
+    sodiumContent: t.Optional[float] = None
+    sugarContent: t.Optional[float] = None
 
 
 @dataclass()
 class RecipeComment(JsonModel):
     _client: "MealieClient" = field(repr=False)
-    recipt_slug: str
+    recipe_slug: str
     text: str
+    id: int
+    uuid: str
+    date_added: datetime
+    user: "User"
 
-    def json(self) -> dict:
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json(
             {
                 "text",
             }
         )
 
+    async def create(self) -> "RecipeComment":
+        return await self._client.create_recipe_comment(self.recipe_slug, self)
+
     async def update(self, text: str) -> "RecipeComment":
-        return await self._client.update_recipe_comment(self.recipe_slug, text)
+        return await self._client.update_recipe_comment(self.recipe_slug, self.id, self)
 
     async def delete(self) -> None:
-        await self._client.delete_recipe_comment(self.recipe_slug, self.text)
+        await self._client.delete_recipe_comment(self.recipe_slug, self.id)
 
 
 @dataclass(repr=False)
-class Recipe:
+class Recipe(JsonModel):
     _client: "MealieClient" = field(repr=False)
     name: str
-    description: str = None
-    image: str = None
-    recipe_yield: str = None
-    recipe_ingredient: t.List[str] = None
-    recipe_instructions: t.List[t.Dict[str, str]] = None
-    tags: t.List[str] = None
-    recipe_category: t.List[str] = None
-    notes: t.List[t.Dict[str, str]] = None
-    rating: int = None
-    extras: t.Dict[str, str] = None
-    id: int = None
-    settings: t.Dict[str, bool] = None
-    total_time: str = None
-    prep_time: str = None
-    perform_time: str = None
-    nutrition: t.Dict[str, str] = None
-    date_added: datetime = None
-    date_updated: datetime = None
-    org_url: str = None
-    tools: list = None
-    assets: list = None
-    comments: t.List[RecipeComment] = None
+    description: t.Optional[str] = None
+    image: t.Optional[str] = None
+    recipe_yield: t.Optional[str] = None
+    recipe_ingredient: t.Optional[t.List[str]] = None
+    recipe_instructions: t.Optional[t.List[t.Dict[str, str]]] = None
+    tags: t.Optional[t.List[str]] = None
+    recipe_category: t.Optional[t.List[str]] = None
+    notes: t.Optional[t.List[t.Dict[str, str]]] = None
+    rating: t.Optional[int] = None
+    extras: t.Optional[t.Dict[str, str]] = None
+    id: t.Optional[int] = None
+    settings: t.Optional[t.Dict[str, bool]] = None
+    total_time: t.Optional[str] = None
+    prep_time: t.Optional[str] = None
+    perform_time: t.Optional[str] = None
+    nutrition: t.Optional[RecipeNutrition] = None
+    date_added: t.Optional[datetime] = None
+    date_updated: t.Optional[datetime] = None
+    org_url: t.Optional[str] = None
+    tools: t.Optional[list] = None
+    assets: t.Optional[t.List[RecipeAsset]] = None
+    comments: t.Optional[t.List[RecipeComment]] = None
 
     @property
     def slug(self):
         return name_to_slug(self.name)
 
-    def json(self) -> dict:
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         data = super().json(
             {
                 "slug",
@@ -127,13 +146,14 @@ class Recipe:
     async def get_asset(self, file_name: str):
         return await self._client.get_asset(self.slug, file_name)
 
-    async def get_image(self, type="original") -> bytes:
+    async def get_image(self, type="original") -> t.Optional[bytes]:
         """
         Gets the image for the recipe.
         Valid types are :code:`original`, :code:`min-original`, and :code:`tiny-original`
         """
-        if self.image:
+        if self.image is not None:
             return await self._client.get_image(self.slug, type)
+        return None
 
     async def push_changes(self) -> "Recipe":
         return await self._client.update_recipe(self)
@@ -156,17 +176,17 @@ class RecipeTag(JsonModel):
     _client: "MealieClient" = field(repr=False)
     id: int
     name: str
-    recipes: t.List[Recipe] = None
+    recipes: t.Optional[t.List[Recipe]] = None
 
     @property
-    def slug(self):
+    def slug(self) -> str:
         return name_to_slug(self.name)
 
-    def json(self) -> dict:
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json({"name", "slug"})
 
     async def update(self, new_name: str) -> "RecipeTag":
-        return await self._client.update_tag(self.id, self)
+        return await self._client.update_tag(self.slug, new_name)
 
     async def delete(self):
         await self._client.delete_tag(self.id)
@@ -177,11 +197,11 @@ class RecipeCategory(JsonModel):
     _client: "MealieClient" = field(repr=False)
     id: int
     name: str
-    recipes: t.List[Recipe] = None
+    recipes: t.Optional[t.List[Recipe]] = None
 
     @property
     def slug(self):
         return name_to_slug(self.name)
 
-    def json(self) -> dict:
+    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json({"name", "slug"})

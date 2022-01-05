@@ -1,0 +1,65 @@
+name: Code Styling
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  linting:
+    name: Code Styling
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install workflow dependencies
+        run: pip install poetry
+      - name: Install Project Dependencies
+        run: poetry install
+      - name: Run flake8
+        run: poetry run flake8 mealieapi
+      - name: Run isort
+        run: poetry run isort mealieapi --check-only
+      - name: Run black 
+        run: poetry run black mealieapi --check
+  typing:
+    name: "Check Types"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install workflow dependencies
+        run: pip install poetry
+      - name: Install Project Dependencies
+        run: poetry install --no-root
+      - name: Run mypy
+        run: poetry run mypy mealieapi
+  tests:
+    name: Run Pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install workflow dependencies
+        run: pip install poetry
+      - name: Install Project Dependencies
+        run: poetry install
+      - name: Run Tests
+        run: |
+          export PYTHONPATH="$PWD"
+          poetry run pytest -v tests
+          
