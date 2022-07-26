@@ -1,14 +1,12 @@
+from __future__ import annotations
+
 import typing as t
-from dataclasses import dataclass, field
 from datetime import datetime
 
 import slugify
 
 from mealieapi.const import YEAR_MONTH_DAY
 from mealieapi.model import InteractiveModel
-
-if t.TYPE_CHECKING:
-    from mealieapi.client import MealieClient
 
 
 class Meal(InteractiveModel):
@@ -17,10 +15,12 @@ class Meal(InteractiveModel):
 
     @property
     def slug(self) -> str:
-        return slugify.slugify(self.name, sep="_")
+        return slugify.slugify(self.name)
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"name", "slug", "description"})
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:
+        data = super().dict(*args, **kwargs)
+        data.update(slug=self.slug)
+        return data
 
     async def get_recipe(self):
         pass
@@ -28,10 +28,10 @@ class Meal(InteractiveModel):
 
 class MealPlanDay(InteractiveModel):
     date: datetime
-    meals: t.List[Meal]
+    meals: list[Meal]
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        data = super().json({"date", "meals"})
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:  # type: ignore[override]
+        data = super().dict(*args, **kwargs)
         data["date"] = data["date"].strftime(YEAR_MONTH_DAY)
         return data
 
@@ -40,12 +40,14 @@ class MealPlan(InteractiveModel):
     group: str
     end_date: datetime
     start_date: datetime
-    meals: t.List[Meal]
-    id: t.Union[int, None] = None
-    shopping_list: t.Union[int, None] = None
+    meals: list[Meal]
+    id: int | None = None
+    shopping_list: int | None = None
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        data = super().json({"group", "end_date", "start_date", "meals"})
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:  # type: ignore[override]
+        data = super().dict(*args, **kwargs)
+        data.pop("id")
+        data.pop("shopping_list")
         data["end_date"] = data["end_date"].strftime(YEAR_MONTH_DAY)
         data["start_date"] = data["start_date"].strftime(YEAR_MONTH_DAY)
         return data
@@ -57,18 +59,17 @@ class Ingredient(InteractiveModel):
     quantity: int
     checked: bool
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"title", "text", "quantity", "checked"})
-
 
 class ShoppingList(InteractiveModel):
     name: str
     group: str
-    items: t.List[Ingredient]
-    id: t.Union[int, None] = None
+    items: list[Ingredient]
+    id: int | None = None
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"name", "groups", "items"})
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:  # type: ignore[override]
+        data = super().dict(*args, **kwargs)
+        data.pop("id")
+        return data
 
     async def toggle_checked(self, index: int) -> "ShoppingList":
         self.items[index].checked = not self.items[index].checked
@@ -83,8 +84,7 @@ class ShoppingList(InteractiveModel):
     async def update(self) -> "ShoppingList":
         if self.id is not None:
             return await self._client.update_shopping_list(self.id, self)
-        else:
-            raise ValueError("Missing required attribute id")
+        raise ValueError("Missing required attribute id")
 
     async def delete(self) -> None:
         if self.id is not None:

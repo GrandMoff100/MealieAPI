@@ -3,9 +3,6 @@ import typing as t
 
 from mealieapi.model import BaseModel, InteractiveModel
 
-if t.TYPE_CHECKING:
-    from mealieapi.client import MealieClient
-
 
 def camel_to_snake_case(obj):
     if isinstance(obj, dict):
@@ -16,10 +13,11 @@ def camel_to_snake_case(obj):
             if isinstance(value, dict):
                 obj[new_key] = camel_to_snake_case(value)
         return obj
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         return [camel_to_snake_case(item) for item in obj]
-    elif isinstance(obj, str):
+    if isinstance(obj, str):
         return re.sub(r"(?<!^)(?=[A-Z])", "_", obj).lower()
+    raise ValueError(f"Unexpected object {obj!r}")
 
 
 class File(InteractiveModel):
@@ -30,25 +28,25 @@ class File(InteractiveModel):
 
 
 class DebugInfo(BaseModel):
-    production: t.Optional[bool] = None
-    version: t.Optional[str] = None
-    demo_status: t.Optional[bool] = None
-    api_port: t.Optional[int] = None
-    api_docs: t.Optional[bool] = None
-    db_type: t.Optional[str] = None
-    db_url: t.Optional[str] = None
-    default_group: t.Optional[str] = None
+    production: bool | None = None
+    version: str | None = None
+    demo_status: bool | None = None
+    api_port: int | None = None
+    api_docs: bool | None = None
+    db_type: str | None = None
+    db_url: str | None = None
+    default_group: str | None = None
 
 
 class DebugStatistics(BaseModel):
-    total_recipes: t.Optional[int] = None
-    total_users: t.Optional[int] = None
-    total_groups: t.Optional[int] = None
-    uncategorized_recipes: t.Optional[int] = None
-    untagged_recipes: t.Optional[int] = None
+    total_recipes: int | None = None
+    total_users: int | None = None
+    total_groups: int | None = None
+    uncategorized_recipes: int | None = None
+    untagged_recipes: int | None = None
 
 
 class DebugVersion(BaseModel):
-    production: t.Optional[bool] = None
-    version: t.Optional[str] = None
-    demo_status: t.Optional[bool] = None
+    production: bool | None = None
+    version: str | None = None
+    demo_status: bool | None = None

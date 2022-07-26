@@ -16,8 +16,8 @@ from mealieapi.misc import camel_to_snake_case
 
 
 class _RawClient:
-    auth: t.Optional[Auth] = None
-    response_processors: t.Dict[str, t.Callable] = {}
+    auth: Auth | None = None
+    response_processors: dict[str, t.Callable] = {}
 
     def __init__(self, url: str) -> None:
         self.url = url
@@ -25,7 +25,7 @@ class _RawClient:
     def endpoint(self, path: str) -> str:
         return posixpath.join(self.url, "api", path)
 
-    def _headers(self) -> dict:
+    def _headers(self) -> dict[str, str]:
         return {
             aiohttp.hdrs.ACCEPT: "application/json",
             aiohttp.hdrs.USER_AGENT: "MealieAPI-Python 0.0.0",
@@ -35,9 +35,9 @@ class _RawClient:
         self,
         path: str,
         method: str = "GET",
-        data: t.Union[str, None] = None,
-        json: t.Union[dict, None] = None,
-        params: t.Union[dict, None] = None,
+        data: str | None = None,
+        json: dict[str, t.Any] | None = None,
+        params: dict[str, t.Any] | None = None,
         use_auth: bool = True,
         **kwargs,
     ) -> t.Any:
@@ -48,7 +48,7 @@ class _RawClient:
             async with session.request(
                 method=method,
                 url=self.endpoint(path),
-                data=data,
+                json=data,
                 json=json,
                 params=params,
                 **kwargs,
@@ -76,24 +76,23 @@ class _RawClient:
                 return await response.read()
 
             content_type = response.headers.get(aiohttp.hdrs.CONTENT_TYPE)
-            if content_type is not None:
-                processor = self.response_processors.get(content_type, default_handler)
-            else:
+            if content_type is None:
                 raise MealieError("Mealie did not return a content-type header.")
+            processor = self.response_processors.get(content_type, default_handler)
             return await processor(response)
-        elif 400 <= response.status < 500:
+        if 400 <= response.status < 500:
             await self.handle_error_json(await response.json())
         else:
             raise InternalServerError("Mealie had a problem with your request.")
 
-    async def handle_error_json(self, data: dict):
+    async def handle_error_json(self, data: dict) -> None:
         if detail := data.get("detail", "Bad Request") == "Not authenticated":
             raise UnauthenticatedError("Not authenticated with Mealie")
-        elif detail == "Bad Request":
+        if detail == "Bad Request":
             raise BadRequestError("Error with your request.")
-        elif detail == "Internal Server Error":
+        if detail == "Internal Server Error":
             raise InternalServerError()
-        elif isinstance(detail, list):
+        if isinstance(detail, list):
             for error in detail:
                 if error["type"] == "value_error.missing":
                     params = error["loc"]
@@ -104,9 +103,9 @@ class _RawClient:
 
 
 @_RawClient.response_processor("application/json")
-async def process_json(response: aiohttp.ClientResponse) -> t.Union[dict, str]:
+async def process_json(response: aiohttp.ClientResponse) -> dict[str, t.Any] | str:
     data = await response.json()
-    if isinstance(data, dict) or isinstance(data, list):
+    if isinstance(data, (dict, list)):
         data = camel_to_snake_case(data)
     return data
 
@@ -130,10 +129,10 @@ class RawClient(_RawClient):
         data = await self.request(
             "auth/token",
             method="POST",
-            data={"username": username, "password": password},  # type: ignore[arg-type]
+            json={"username": username, "password": password},  # type: ignore[arg-type]
             use_auth=False,
         )
-        return Auth(_client=self, **data)
+        return Auth(_client=self, **data)  # type: ignore[arg-type]
 
     async def login(self, username: str, password: str) -> None:
         """Makes the Client authorize with the login credentials of a user."""
@@ -141,4 +140,4 @@ class RawClient(_RawClient):
 
     def authorize(self, token: str) -> None:
         """Makes the Client authorize with an API token."""
-        self.auth = Auth(_client=self, token=token)
+        self.auth = Auth(_client=self, token=token)  # type: ignore[arg-type]

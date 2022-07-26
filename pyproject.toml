@@ -1,9 +1,21 @@
 [tool.isort]
 profile = "black"
 
+[tool.mypy]
+disable_error_code = ["import", "attr-defined"]
+
 [tool.pylint.message_control]
 disable = [
-    "import-error"
+    "import-error",
+    "missing-class-docstring",
+    "missing-module-docstring",
+    "missing-function-docstring",
+    "too-few-public-methods",
+    "too-many-public-methods",
+    "too-many-arguments",
+    "redefined-builtin",
+    "invalid-name",
+    "line-too-long"
 ]
 
 [tool.poetry]
