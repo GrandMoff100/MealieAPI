@@ -48,7 +48,7 @@ class _RawClient:
             async with session.request(
                 method=method,
                 url=self.endpoint(path),
-                json=data,
+                data=data,
                 json=json,
                 params=params,
                 **kwargs,
