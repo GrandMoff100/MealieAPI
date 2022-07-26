@@ -1,6 +1,11 @@
 [tool.isort]
 profile = "black"
 
+[tool.pylint.message_control]
+disable = [
+    "import-error"
+]
+
 [tool.poetry]
 name = "MealieAPI"
 version = "0.0.0"
@@ -20,6 +25,8 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.7"
 aiohttp = "^3.8.1"
+pydantic = "^1.9.1"
+python-slugify = "^6.1.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"

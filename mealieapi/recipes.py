@@ -3,25 +3,22 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from zipfile import ZipFile
 
+import slugify
+
 from mealieapi.const import YEAR_MONTH_DAY, YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
-from mealieapi.misc import name_to_slug
-from mealieapi.mixins import JsonModel
+from mealieapi.model import BaseModel, InteractiveModel
 
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
     from mealieapi.users import User
 
 
-@dataclass()
-class RecipeImage(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class RecipeImage(InteractiveModel):
     recipe_slug: str
     image: int
 
 
-@dataclass()
-class RecipeAsset(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class RecipeAsset(InteractiveModel):
     recipe_slug: str
     file_name: str
     name: t.Optional[str] = None
@@ -31,8 +28,7 @@ class RecipeAsset(JsonModel):
         return await self._client.get_asset(self.recipe_slug, self.file_name)
 
 
-@dataclass()
-class RecipeNutrition:
+class RecipeNutrition(BaseModel):
     calories: t.Optional[float] = None
     fatContent: t.Optional[float] = None
     proteinContent: t.Optional[float] = None
@@ -42,9 +38,7 @@ class RecipeNutrition:
     sugarContent: t.Optional[float] = None
 
 
-@dataclass()
-class RecipeComment(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class RecipeComment(InteractiveModel):
     recipe_slug: str
     text: str
     id: int
@@ -63,15 +57,17 @@ class RecipeComment(JsonModel):
         return await self._client.create_recipe_comment(self.recipe_slug, self)
 
     async def update(self, text: str) -> "RecipeComment":
-        return await self._client.update_recipe_comment(self.recipe_slug, self.id, self)
+        new_comment = self.copy()
+        new_comment.text = text
+        return await self._client.update_recipe_comment(
+            self.recipe_slug, self.id, new_comment
+        )
 
     async def delete(self) -> None:
         await self._client.delete_recipe_comment(self.recipe_slug, self.id)
 
 
-@dataclass(repr=False)
-class Recipe(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class Recipe(InteractiveModel):
     name: str
     description: t.Optional[str] = None
     image: t.Optional[str] = None
@@ -97,8 +93,8 @@ class Recipe(JsonModel):
     comments: t.Optional[t.List[RecipeComment]] = None
 
     @property
-    def slug(self):
-        return name_to_slug(self.name)
+    def slug(self) -> str:
+        return slugify.slugify(self.name)
 
     def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         data = super().json(
@@ -146,13 +142,13 @@ class Recipe(JsonModel):
     async def get_asset(self, file_name: str):
         return await self._client.get_asset(self.slug, file_name)
 
-    async def get_image(self, type="original") -> t.Optional[bytes]:
+    async def get_image(self, _type="original") -> t.Optional[bytes]:
         """
         Gets the image for the recipe.
         Valid types are :code:`original`, :code:`min-original`, and :code:`tiny-original`
         """
         if self.image is not None:
-            return await self._client.get_image(self.slug, type)
+            return await self._client.get_image(self.slug, _type)
         return None
 
     async def push_changes(self) -> "Recipe":
@@ -171,16 +167,14 @@ class Recipe(JsonModel):
         return f"<Recipe {self.slug!r}>"
 
 
-@dataclass()
-class RecipeTag(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class RecipeTag(InteractiveModel):
     id: int
     name: str
     recipes: t.Optional[t.List[Recipe]] = None
 
     @property
     def slug(self) -> str:
-        return name_to_slug(self.name)
+        return slugify.slugify(self.name)
 
     def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json({"name", "slug"})
@@ -192,16 +186,14 @@ class RecipeTag(JsonModel):
         await self._client.delete_tag(self.id)
 
 
-@dataclass()
-class RecipeCategory(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class RecipeCategory(InteractiveModel):
     id: int
     name: str
     recipes: t.Optional[t.List[Recipe]] = None
 
     @property
     def slug(self):
-        return name_to_slug(self.name)
+        return slugify.slugify(self.name)
 
     def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json({"name", "slug"})

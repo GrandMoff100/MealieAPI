@@ -1,5 +1,5 @@
 import logging
-import os
+import posixpath
 import typing as t
 
 import aiohttp
@@ -23,7 +23,7 @@ class _RawClient:
         self.url = url
 
     def endpoint(self, path: str) -> str:
-        return os.path.join(self.url, "api", path)
+        return posixpath.join(self.url, "api", path)
 
     def _headers(self) -> dict:
         return {
@@ -64,11 +64,12 @@ class _RawClient:
         return register_processor
 
     async def process_response(self, response: aiohttp.ClientResponse) -> t.Any:
-        logging.debug(f"Status: {response.status}")
-        logging.debug(f"URL: {response.url}")
-        logging.debug(f"Method: {response.method}")
-        logging.debug(f"Content: {await response.read()!r}"[:100] + "...")
+        logging.debug("Status: %i", response.status)
+        logging.debug("URL: %s", response.url)
+        logging.debug("Method: %r", response.method)
+        logging.debug("Content: %r ", (await response.read())[:100] + b"...")
         logging.debug(response.request_info)
+
         if 200 <= response.status < 300:
 
             async def default_handler(response: aiohttp.ClientResponse) -> bytes:
@@ -116,9 +117,6 @@ async def process_stream(response: aiohttp.ClientResponse) -> bytes:
 
 
 class RawClient(_RawClient):
-    def __init__(self, url) -> None:
-        super().__init__(url)
-
     # Authorization
     def _headers(self) -> dict:
         """Updates the Raw Client headers with the Authorization header."""
@@ -135,7 +133,7 @@ class RawClient(_RawClient):
             data={"username": username, "password": password},  # type: ignore[arg-type]
             use_auth=False,
         )
-        return Auth(self, **data)
+        return Auth(_client=self, **data)
 
     async def login(self, username: str, password: str) -> None:
         """Makes the Client authorize with the login credentials of a user."""
@@ -143,4 +141,4 @@ class RawClient(_RawClient):
 
     def authorize(self, token: str) -> None:
         """Makes the Client authorize with an API token."""
-        self.auth = Auth(self, token)
+        self.auth = Auth(_client=self, token=token)

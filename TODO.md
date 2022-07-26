@@ -19,7 +19,7 @@ What needs to be done so far before Version 0.0.1?
 
 ## Development
 - [ ] Implement Themes
-- [ ] Implement Backups
+- [X] Implement Backups
 - [ ] Implement Migrations
 - [ ] Implement Settings
 - [ ] Implement Event and notifications

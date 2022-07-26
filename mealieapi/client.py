@@ -2,8 +2,10 @@ import io
 import typing as t
 from datetime import datetime
 from zipfile import ZipFile
+import posixpath
 
 from mealieapi.auth import Token
+from mealieapi.backup import Backup
 from mealieapi.const import YEAR_MONTH_DAY, YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
 from mealieapi.meals import Ingredient, Meal, MealPlan, MealPlanDay, ShoppingList
 from mealieapi.misc import DebugInfo, DebugStatistics, DebugVersion, File
@@ -31,8 +33,8 @@ class MealieClient(RawClient):
         )
         return self.process_token_json(data)
 
-    async def delete_api_key(self, id: int) -> None:
-        await self.request(f"users/api-tokens/{id}", method="DELETE")
+    async def delete_api_key(self, token_id: int) -> None:
+        await self.request(f"users/api-tokens/{token_id}", method="DELETE")
 
     # User Signups
     async def signup_with_token(self, token: str, user: User) -> User:
@@ -429,14 +431,14 @@ class MealieClient(RawClient):
 
     # Site Media
     async def get_asset(self, recipe_slug: str, file_name: str) -> bytes:
-        return await self.request(f"media/recipes/{recipe_slug}/assets/{file_name}")  # type: ignore[arg-type]
+        return await self.request(f"media/recipes/{recipe_slug}/assets/{file_name}", use_auth=False)  # type: ignore[arg-type]
 
     async def get_image(self, recipe_slug: str, type="original") -> bytes:
         """
         Gets the image for the recipe.
         Valid types are :code:`original`, :code:`min-original`, and :code:`tiny-original`
         """
-        return await self.request(f"media/recipes/{recipe_slug}/images/{type}.webp")  # type: ignore[arg-type]
+        return await self.request(f"media/recipes/{recipe_slug}/images/{type}.webp", use_auth=False)  # type: ignore[arg-type]
 
     # Debug
     async def get_log_file(self) -> File:
@@ -461,3 +463,48 @@ class MealieClient(RawClient):
             "utils/download", params=dict(token=file_token), use_auth=False
         )
         return content  # type: ignore[arg-type]
+
+    # Backup Endpoints
+    async def get_available_backups(self) -> t.List[Backup]:
+        data = await self.request("backups/available")
+        return [
+            Backup(_client=self, **backup_data)
+            for backup_data in data.get("imports", [])
+        ]
+
+    async def create_backup(
+        self,
+        name: str,
+        include_recipes: bool = True,
+        include_settings: bool = True,
+        include_pages: bool = True,
+        include_themes: bool = True,
+        include_groups: bool = True,
+        include_users: bool = True,
+        include_notifications: bool = True,
+    ) -> Backup:
+        data = await self.request(
+            "backups/export/database",
+            json={
+                "tag": name,
+                "options": {
+                    "recipes": include_recipes,
+                    "settings": include_settings,
+                    "pages": include_pages,
+                    "themes": include_themes,
+                    "groups": include_groups,
+                    "users": include_users,
+                    "notifications": include_notifications,
+                },
+                "template": [],
+            },
+            method="POST",
+        )
+        return Backup(name=posixpath.split(data.get("export_path", ""))[1])
+
+    async def download_backup(self, file_name: str) -> bytes:
+        data = await self.request(f"backups/{file_name}/download")
+        return await File(_client=self, file_token=data.get("fileToken", "")).download()
+
+    async def delete_backup(self, file_name: str) -> None:
+        await self.request(f"backups/{file_name}/download")

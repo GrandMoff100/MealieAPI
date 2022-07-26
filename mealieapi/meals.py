@@ -2,23 +2,22 @@ import typing as t
 from dataclasses import dataclass, field
 from datetime import datetime
 
+import slugify
+
 from mealieapi.const import YEAR_MONTH_DAY
-from mealieapi.misc import name_to_slug
-from mealieapi.mixins import JsonModel
+from mealieapi.model import InteractiveModel
 
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
 
 
-@dataclass()
-class Meal(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class Meal(InteractiveModel):
     name: str
     description: str
 
     @property
-    def slug(self):
-        return name_to_slug(self.name)
+    def slug(self) -> str:
+        return slugify.slugify(self.name, sep="_")
 
     def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
         return super().json({"name", "slug", "description"})
@@ -27,9 +26,7 @@ class Meal(JsonModel):
         pass
 
 
-@dataclass()
-class MealPlanDay(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class MealPlanDay(InteractiveModel):
     date: datetime
     meals: t.List[Meal]
 
@@ -39,9 +36,7 @@ class MealPlanDay(JsonModel):
         return data
 
 
-@dataclass()
-class MealPlan(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class MealPlan(InteractiveModel):
     group: str
     end_date: datetime
     start_date: datetime
@@ -56,9 +51,7 @@ class MealPlan(JsonModel):
         return data
 
 
-@dataclass()
-class Ingredient(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class Ingredient(InteractiveModel):
     title: str
     text: str
     quantity: int
@@ -68,9 +61,7 @@ class Ingredient(JsonModel):
         return super().json({"title", "text", "quantity", "checked"})
 
 
-@dataclass()
-class ShoppingList(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class ShoppingList(InteractiveModel):
     name: str
     group: str
     items: t.List[Ingredient]
@@ -83,7 +74,7 @@ class ShoppingList(JsonModel):
         self.items[index].checked = not self.items[index].checked
         return await self.update()
 
-    def length(self):
+    def length(self) -> int:
         return len(self.items)
 
     async def create(self) -> "ShoppingList":

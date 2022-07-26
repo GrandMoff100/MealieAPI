@@ -1,6 +1,6 @@
 import sys
-from mealieapi import MealieClient
 
+from mealieapi import MealieClient
 
 URL = "https://demo.mealie.io"
 USER = "changeme@email.com"
@@ -219,4 +219,3 @@ class TestCreateRecipe:
 # update_recipe_image_from_url
 # update_shopping_list
 # update_mealplan
-

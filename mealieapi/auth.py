@@ -1,18 +1,15 @@
 import typing as t
-from dataclasses import dataclass, field
 
 import aiohttp
 
-from mealieapi.mixins import JsonModel
+from mealieapi.model import InteractiveModel
 
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
     from mealieapi.raw import RawClient
 
 
-@dataclass()
-class Token(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class Token(InteractiveModel):
     name: str
     id: int
     token: t.Union[str, None] = None
@@ -24,9 +21,7 @@ class Token(JsonModel):
         await self._client.delete_api_key(self.id)
 
 
-@dataclass()
-class Auth:
-    _client: "RawClient" = field(repr=False)
+class Auth(InteractiveModel):
     access_token: str
     token_type: t.Optional[str] = None
 

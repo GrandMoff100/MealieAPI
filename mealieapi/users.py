@@ -1,20 +1,17 @@
 import io
 import typing as t
-from dataclasses import dataclass, field
 from datetime import timedelta
 
 from mealieapi.auth import Token
 from mealieapi.meals import MealPlan, ShoppingList
-from mealieapi.mixins import JsonModel
+from mealieapi.model import InteractiveModel
 from mealieapi.recipes import Recipe, RecipeCategory
 
 if t.TYPE_CHECKING:
     from mealieapi.client import MealieClient
 
 
-@dataclass()
-class User(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class User(InteractiveModel):
     username: str
     full_name: str
     email: str
@@ -73,9 +70,7 @@ class User(JsonModel):
         return await self._client.update_user_image(self.id, image)
 
 
-@dataclass()
-class Group(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class Group(InteractiveModel):
     name: str
     id: t.Union[int, None] = None
     categories: t.Union[t.List[RecipeCategory], None] = None
@@ -105,9 +100,7 @@ class Group(JsonModel):
             raise ValueError("Missing required parameter id")
 
 
-@dataclass()
-class UserSignup(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class UserSignup(InteractiveModel):
     name: str
     admin: bool
     token: t.Union[str, None] = None
