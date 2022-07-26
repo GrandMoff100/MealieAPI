@@ -1,5 +1,4 @@
 import re
-import typing as t
 
 from mealieapi.model import BaseModel, InteractiveModel
 
