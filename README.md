@@ -27,7 +27,7 @@ This next part depends on whether you have an API key, or your login credentials
 
 If you want to use your username and password you must use `await client.login("<USERNAME_OR_EMAIL>", "<PASSWORD>")` or if you are using an API key you need to use `client.authorize("<API_KEY>")` (Note: without the await).
 
-```
+```py
 async def main():
     await client.login("<USERNAME_OR_EMAIL>", "<PASSWORD>")
     # OR
