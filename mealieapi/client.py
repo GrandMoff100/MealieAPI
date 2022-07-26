@@ -1,9 +1,11 @@
 import io
+import posixpath
 import typing as t
 from datetime import datetime
 from zipfile import ZipFile
 
 from mealieapi.auth import Token
+from mealieapi.backup import Backup
 from mealieapi.const import YEAR_MONTH_DAY, YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
 from mealieapi.meals import Ingredient, Meal, MealPlan, MealPlanDay, ShoppingList
 from mealieapi.misc import DebugInfo, DebugStatistics, DebugVersion, File
@@ -22,7 +24,7 @@ from mealieapi.users import Group, User, UserSignup
 
 class MealieClient(RawClient):
     # User API Keys
-    def process_token_json(self, data: t.Dict[str, t.Any]) -> Token:
+    def process_token_json(self, data: dict[str, t.Any]) -> Token:
         return Token(self, **data)
 
     async def create_api_key(self, name: str) -> Token:
@@ -31,23 +33,23 @@ class MealieClient(RawClient):
         )
         return self.process_token_json(data)
 
-    async def delete_api_key(self, id: int) -> None:
-        await self.request(f"users/api-tokens/{id}", method="DELETE")
+    async def delete_api_key(self, token_id: int) -> None:
+        await self.request(f"users/api-tokens/{token_id}", method="DELETE")
 
     # User Signups
     async def signup_with_token(self, token: str, user: User) -> User:
         data = await self.request(
-            f"users/sign-ups/{token}", method="POST", json=user.json(), use_auth=False
+            f"users/sign-ups/{token}", method="POST", json=user.dict(), use_auth=False
         )
         return self.process_user_json(data)
 
-    async def delete_signup_token(self, token: t.Optional[str]) -> None:
+    async def delete_signup_token(self, token: str | None) -> None:
         if token is None:
             await self.request(f"users/sign-ups/{token}", method="DELETE")
         else:
             raise ValueError("Token string cannot be NoneType must be string")
 
-    async def get_open_signups(self) -> t.List[UserSignup]:
+    async def get_open_signups(self) -> list[UserSignup]:
         data = await self.request("users/sign-ups")
         return [UserSignup(self, **signup) for signup in data]
 
@@ -58,7 +60,7 @@ class MealieClient(RawClient):
         return UserSignup(self, **data)
 
     # Users
-    def process_user_json(self, data: t.Dict[str, t.Any]) -> User:
+    def process_user_json(self, data: dict[str, t.Any]) -> User:
         if data.get("favorite_recipes"):
             data["favorite_recipes"] = [
                 self.process_recipe_json(recipe) for recipe in data["favorite_recipes"]
@@ -74,7 +76,7 @@ class MealieClient(RawClient):
 
     async def update_user_image(self, user_id: int, file: io.BytesIO) -> bytes:
         return await self.request(
-            f"users/{user_id}/image", data=dict(profile_image=file)  # type: ignore[arg-type]
+            f"users/{user_id}/image", json=dict(profile_image=file)  # type: ignore[arg-type]
         )
 
     async def get_user(self, user_id: int) -> User:
@@ -82,7 +84,7 @@ class MealieClient(RawClient):
         return self.process_user_json(data)
 
     async def update_user(self, user_id: int, user: User) -> User:
-        data = await self.request(f"users/{user_id}", method="PUT", json=user.json())
+        data = await self.request(f"users/{user_id}", method="PUT", json=user.dict())
         return self.process_user_json(data)
 
     async def delete_user(self, user_id: int) -> None:
@@ -100,7 +102,7 @@ class MealieClient(RawClient):
             json=dict(current_password=current_password, new_password=new_password),
         )
 
-    async def get_favorites(self, user_id: int) -> t.Optional[t.List[Recipe]]:
+    async def get_favorites(self, user_id: int) -> list[Recipe] | None:
         data = await self.request(f"users/{user_id}/favorites")
         user = self.process_user_json(data)
         return user.favorite_recipes
@@ -111,29 +113,29 @@ class MealieClient(RawClient):
     async def remove_favorite(self, user_id: int, recipe_slug: str):
         await self.request(f"users/{user_id}/{recipe_slug}", method="DELETE")
 
-    async def get_all_users(self) -> t.List[User]:
+    async def get_all_users(self) -> list[User]:
         data = await self.request("users")
         return [self.process_user_json(user) for user in data]
 
     async def create_user(self, user: User) -> User:
-        data = await self.request("users", method="POST", json=user.json())
+        data = await self.request("users", method="POST", json=user.dict())
         return self.process_user_json(data)
 
     # Groups
-    def process_group_json(self, data: t.Dict[str, t.Any]) -> Group:
+    def process_group_json(self, data: dict[str, t.Any]) -> Group:
         data["users"] = [self.process_user_json(info) for info in data["users"]]
         return Group(self, **data)
 
-    async def get_groups(self) -> t.List[Group]:
+    async def get_groups(self) -> list[Group]:
         data = await self.request("groups")
         return [self.process_group_json(group) for group in data]
 
     async def create_group(self, group: Group) -> Group:
-        data = await self.request("groups", method="POST", json=group.json())
+        data = await self.request("groups", method="POST", json=group.dict())
         return self.process_group_json(data)
 
     async def update_group(self, id: int, group: Group) -> Group:
-        data = await self.request(f"groups/{id}", method="PUT", json=group.json())
+        data = await self.request(f"groups/{id}", method="PUT", json=group.dict())
         return self.process_group_json(data)
 
     async def delete_group(self, id: int) -> None:
@@ -149,32 +151,32 @@ class MealieClient(RawClient):
         return self.process_group_json(data)
 
     # Query All Recipes
-    async def get_recipes(self, start=0, limit=9999) -> t.List[Recipe]:
+    async def get_recipes(self, start=0, limit=9999) -> list[Recipe]:
         data = await self.request(
             "recipes/summary", params={"start": start, "limit": limit}
         )
         return [Recipe(self, **data) for data in data]
 
-    async def get_untagged_recipes(self) -> t.List[Recipe]:
+    async def get_untagged_recipes(self) -> list[Recipe]:
         data = await self.request("recipes/summary/untagged")
         return [Recipe(self, **recipe) for recipe in data]
 
-    async def get_uncategorized_recipes(self) -> t.List[Recipe]:
+    async def get_uncategorized_recipes(self) -> list[Recipe]:
         data = await self.request("recipes/summary/uncategorized")
         return [Recipe(self, **recipe) for recipe in data]
 
     # Recipe Methods
-    def process_comment_json(self, data: t.Dict[str, t.Any]) -> RecipeComment:
+    def process_comment_json(self, data: dict[str, t.Any]) -> RecipeComment:
         data["date_added"] = datetime.strptime(
             data["date_added"], YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
         )
         data["user"] = self.process_user_json(data["user"])
         return RecipeComment(self, **data)
 
-    def process_nutrition_json(self, data: t.Dict[str, t.Any]) -> RecipeNutrition:
+    def process_nutrition_json(self, data: dict[str, t.Any]) -> RecipeNutrition:
         return RecipeNutrition(**data)
 
-    def process_recipe_json(self, data: t.Dict[str, t.Any]) -> Recipe:
+    def process_recipe_json(self, data: dict[str, t.Any]) -> Recipe:
         data["org_url"] = data.get("org_u_r_l")
         if "org_u_r_l" in data:
             del data["org_u_r_l"]
@@ -201,7 +203,7 @@ class MealieClient(RawClient):
 
     async def update_recipe(self, recipe: Recipe) -> Recipe:
         data = await self.request(
-            f"recipes/{recipe.slug}", method="PUT", json=recipe.json()
+            f"recipes/{recipe.slug}", method="PUT", json=recipe.dict()
         )
         return self.process_recipe_json(data)
 
@@ -210,7 +212,7 @@ class MealieClient(RawClient):
         return ZipFile(io.BytesIO(data))
 
     async def create_recipe(self, recipe: Recipe) -> Recipe:
-        slug = await self.request("recipes/create", json=recipe.json(), method="POST")
+        slug = await self.request("recipes/create", json=recipe.dict(), method="POST")
         return await self.get_recipe(slug)
 
     async def create_recipe_from_url(self, url: str) -> Recipe:
@@ -220,9 +222,8 @@ class MealieClient(RawClient):
         return await self.get_recipe(slug)
 
     async def create_recipe_from_zip(self, file: io.BytesIO):
-        # TODO: Look into zip file encoding to fix OSError: [Errno 22] Invalid Argument from Server logs
         slug = await self.request(
-            "recipes/create-from-zip", method="POST", data={"archive": file}  # type: ignore[arg-type]
+            "recipes/create-from-zip", method="POST", json={"archive": file}  # type: ignore[arg-type]
         )
         return await self.get_recipe(slug)
 
@@ -232,7 +233,7 @@ class MealieClient(RawClient):
     ) -> RecipeImage:
         data = await self.request(
             f"recipes/{recipe_slug}/image",
-            data={"image": file, "extension": extension},  # type: ignore[arg-type]
+            json={"image": file, "extension": extension},  # type: ignore[arg-type]
             method="PUT",
         )
         return RecipeImage(self, recipe_slug, **data)
@@ -247,13 +248,13 @@ class MealieClient(RawClient):
     ) -> RecipeAsset:
         data = await self.request(
             f"recipes/{recipe_slug}/assets",
-            data=dict(name=name, icon=icon, extension=extension, file=file),  # type: ignore[arg-type]
+            json=dict(name=name, icon=icon, extension=extension, file=file),  # type: ignore[arg-type]
             method="POST",
         )
         return RecipeAsset(self, recipe_slug, **data)
 
     # Recipe Tags
-    def process_tag_json(self, data: t.Dict[str, t.Any]) -> RecipeTag:
+    def process_tag_json(self, data: dict[str, t.Any]) -> RecipeTag:
         if data.get("recipes"):
             data["recipes"] = [
                 self.process_recipe_json(recipe) for recipe in data["recipes"]
@@ -262,7 +263,7 @@ class MealieClient(RawClient):
             del data["slug"]
         return RecipeTag(self, **data)
 
-    async def get_tags(self) -> t.List[RecipeTag]:
+    async def get_tags(self) -> list[RecipeTag]:
         tags = await self.request("tags", use_auth=False)
         return [self.process_tag_json(data) for data in tags]
 
@@ -270,11 +271,11 @@ class MealieClient(RawClient):
         data = await self.request("tags", method="POST", json=dict(name=name))
         return self.process_tag_json(data)
 
-    async def get_empty_tags(self) -> t.List[RecipeTag]:
+    async def get_empty_tags(self) -> list[RecipeTag]:
         tags = await self.request("tags/empty", use_auth=False)
         return [self.process_tag_json(data) for data in tags]
 
-    async def get_tag_recipes(self, tag_slug: str) -> t.List[Recipe]:
+    async def get_tag_recipes(self, tag_slug: str) -> list[Recipe]:
         data = await self.request(f"tags/{tag_slug}")
         return [self.process_recipe_json(recipe) for recipe in data["recipes"]]
 
@@ -288,7 +289,7 @@ class MealieClient(RawClient):
         await self.request(f"tags/{tag_slug}", method="DELETE")
 
     # Recipe Categories
-    def process_category_json(self, data: t.Dict[str, t.Any]) -> RecipeCategory:
+    def process_category_json(self, data: dict[str, t.Any]) -> RecipeCategory:
         if data.get("recipes"):
             data["recipes"] = [
                 self.process_recipe_json(recipe) for recipe in data["recipes"]
@@ -297,7 +298,7 @@ class MealieClient(RawClient):
             del data["slug"]
         return RecipeCategory(self, **data)
 
-    async def get_categories(self) -> t.List[RecipeCategory]:
+    async def get_categories(self) -> list[RecipeCategory]:
         categories = await self.request("categories", use_auth=False)
         return [self.process_category_json(data) for data in categories]
 
@@ -305,11 +306,11 @@ class MealieClient(RawClient):
         data = await self.request("categories", method="POST", json=dict(name=name))
         return self.process_category_json(data)
 
-    async def get_empty_categories(self) -> t.List[RecipeCategory]:
+    async def get_empty_categories(self) -> list[RecipeCategory]:
         categories = await self.request("categories/empty", use_auth=False)
         return [self.process_category_json(data) for data in categories]
 
-    async def get_category_recipes(self, category_slug: str) -> t.List[Recipe]:
+    async def get_category_recipes(self, category_slug: str) -> list[Recipe]:
         data = await self.request(f"categories/{category_slug}")
         return [self.process_recipe_json(recipe) for recipe in data["recipes"]]
 
@@ -329,7 +330,7 @@ class MealieClient(RawClient):
         self, recipe_slug: str, comment: RecipeComment
     ) -> RecipeComment:
         data = await self.request(
-            f"recipes/{recipe_slug}/comments", method="POST", data=comment.json()  # type: ignore[arg-type]
+            f"recipes/{recipe_slug}/comments", method="POST", json=comment.dict()  # type: ignore[arg-type]
         )
         return self.process_comment_json(data)  # type: ignore[arg-type]
 
@@ -339,7 +340,7 @@ class MealieClient(RawClient):
         data = await self.request(
             f"recipes/{recipe_slug}/comments/{comment_id}",
             method="PUT",
-            data=comment.json(),  # type: ignore[arg-type]
+            json=comment.dict(),  # type: ignore[arg-type]
         )
         return self.process_comment_json(data)  # type: ignore[arg-type]
 
@@ -349,13 +350,13 @@ class MealieClient(RawClient):
         )
 
     # Shopping List
-    def process_shopping_list_json(self, data: t.Dict[str, t.Any]) -> ShoppingList:
+    def process_shopping_list_json(self, data: dict[str, t.Any]) -> ShoppingList:
         data["items"] = [Ingredient(self, **item) for item in data["items"]]
         return ShoppingList(self, **data)
 
     async def create_shopping_list(self, shopping_list: ShoppingList) -> ShoppingList:
         data = await self.request(
-            "shopping-lists", method="POST", json=shopping_list.json()
+            "shopping-lists", method="POST", json=shopping_list.dict()
         )
         return self.process_shopping_list_json(data)  # type: ignore[arg-type]
 
@@ -367,7 +368,7 @@ class MealieClient(RawClient):
         self, id: int, shopping_list: ShoppingList
     ) -> ShoppingList:
         data = await self.request(
-            f"shopping-lists/{id}", method="PUT", json=shopping_list.json()
+            f"shopping-lists/{id}", method="PUT", json=shopping_list.dict()
         )
         return self.process_shopping_list_json(data)  # type: ignore[arg-type]
 
@@ -375,15 +376,15 @@ class MealieClient(RawClient):
         await self.request(f"shopping-lists/{id}", method="DELETE")
 
     # Meal Plans
-    def process_meal_json(self, data: t.Dict[str, t.Any]) -> Meal:
+    def process_meal_json(self, data: dict[str, t.Any]) -> Meal:
         return Meal(self, **data)
 
-    def process_mealplanday_json(self, data: t.Dict[str, t.Any]) -> MealPlanDay:
+    def process_mealplanday_json(self, data: dict[str, t.Any]) -> MealPlanDay:
         data["date"] = datetime.strptime(data["date"], YEAR_MONTH_DAY)
         data["meals"] = [self.process_meal_json(meal) for meal in data["meals"]]
         return MealPlanDay(self, **data)
 
-    def process_mealplan_json(self, data: t.Dict[str, t.Any]) -> MealPlan:
+    def process_mealplan_json(self, data: dict[str, t.Any]) -> MealPlan:
         data["end_date"] = datetime.strptime(data["end_date"], YEAR_MONTH_DAY)
         data["start_date"] = datetime.strptime(data["end_date"], YEAR_MONTH_DAY)
         data["plan_days"] = [
@@ -391,7 +392,7 @@ class MealieClient(RawClient):
         ]
         return MealPlan(self, **data)
 
-    async def get_mealplans_all(self) -> t.List[MealPlan]:
+    async def get_mealplans_all(self) -> list[MealPlan]:
         data = await self.request("meal-plans/all")
         return [self.process_mealplan_json(mealplan) for mealplan in data]  # type: ignore[arg-type]
 
@@ -409,12 +410,12 @@ class MealieClient(RawClient):
 
     async def update_mealplan(self, id: int, mealplan: MealPlan) -> MealPlan:
         data = await self.request(
-            f"meal-plans/{id}", method="PUT", json=mealplan.json()
+            f"meal-plans/{id}", method="PUT", json=mealplan.dict()
         )
         return self.process_mealplan_json(data)  # type: ignore[arg-type]
 
     async def create_mealplan(self, mealplan: MealPlan) -> MealPlan:
-        data = await self.request("meal-plans", method="POST", json=mealplan.json())
+        data = await self.request("meal-plans", method="POST", json=mealplan.dict())
         return self.process_mealplan_json(data)  # type: ignore[arg-type]
 
     async def delete_mealplan(self, id: int) -> None:
@@ -429,19 +430,19 @@ class MealieClient(RawClient):
 
     # Site Media
     async def get_asset(self, recipe_slug: str, file_name: str) -> bytes:
-        return await self.request(f"media/recipes/{recipe_slug}/assets/{file_name}")  # type: ignore[arg-type]
+        return await self.request(f"media/recipes/{recipe_slug}/assets/{file_name}", use_auth=False)  # type: ignore[arg-type]
 
     async def get_image(self, recipe_slug: str, type="original") -> bytes:
         """
         Gets the image for the recipe.
         Valid types are :code:`original`, :code:`min-original`, and :code:`tiny-original`
         """
-        return await self.request(f"media/recipes/{recipe_slug}/images/{type}.webp")  # type: ignore[arg-type]
+        return await self.request(f"media/recipes/{recipe_slug}/images/{type}.webp", use_auth=False)  # type: ignore[arg-type]
 
     # Debug
     async def get_log_file(self) -> File:
         data = await self.request("debug/log")
-        return File(self, str(data.get("file_token")))  # type: ignore[arg-type]
+        return File(_client=self, file_token=str(data.get("file_token")))  # type: ignore[arg-type]
 
     async def get_debug(self) -> DebugInfo:
         data = await self.request("debug")
@@ -461,3 +462,50 @@ class MealieClient(RawClient):
             "utils/download", params=dict(token=file_token), use_auth=False
         )
         return content  # type: ignore[arg-type]
+
+    # Backup Endpoints
+    async def get_available_backups(self) -> list[Backup]:
+        data = await self.request("backups/available")
+        return [
+            Backup(_client=self, **backup_data)
+            for backup_data in data.get("imports", [])
+        ]
+
+    async def create_backup(
+        self,
+        name: str,
+        include_recipes: bool = True,
+        include_settings: bool = True,
+        include_pages: bool = True,
+        include_themes: bool = True,
+        include_groups: bool = True,
+        include_users: bool = True,
+        include_notifications: bool = True,
+    ) -> Backup:
+        data = await self.request(
+            "backups/export/database",
+            json={
+                "tag": name,
+                "options": {
+                    "recipes": include_recipes,
+                    "settings": include_settings,
+                    "pages": include_pages,
+                    "themes": include_themes,
+                    "groups": include_groups,
+                    "users": include_users,
+                    "notifications": include_notifications,
+                },
+                "template": [],
+            },
+            method="POST",
+        )
+        return Backup(
+            _client=self, name=posixpath.split(data.get("export_path", ""))[1]
+        )
+
+    async def download_backup(self, file_name: str) -> bytes:
+        data = await self.request(f"backups/{file_name}/download")
+        return await File(_client=self, file_token=data.get("fileToken", "")).download()
+
+    async def delete_backup(self, file_name: str) -> None:
+        await self.request(f"backups/{file_name}/download")

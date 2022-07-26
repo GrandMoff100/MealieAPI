@@ -1,43 +1,31 @@
+from __future__ import annotations
+
 import io
 import typing as t
-from dataclasses import dataclass, field
 from datetime import timedelta
 
 from mealieapi.auth import Token
 from mealieapi.meals import MealPlan, ShoppingList
-from mealieapi.mixins import JsonModel
+from mealieapi.model import InteractiveModel
 from mealieapi.recipes import Recipe, RecipeCategory
 
-if t.TYPE_CHECKING:
-    from mealieapi.client import MealieClient
 
-
-@dataclass()
-class User(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class User(InteractiveModel):
     username: str
     full_name: str
     email: str
     admin: bool
     group: str
     id: int
-    favorite_recipes: t.Union[t.List[Recipe], None] = None
-    tokens: t.Union[t.List[Token], None] = None
-    password: t.Union[str, None] = None
+    favorite_recipes: list[Recipe] | None = None
+    tokens: list[Token] | None = None
+    password: str | None = None
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json(
-            {
-                "username",
-                "full_name",
-                "email",
-                "admin",
-                "group",
-                "password",
-                "id",
-                "favorite_recipes",
-            }
-        )
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:  # type: ignore[override]
+        data = super().dict(*args, **kwargs)
+        data.pop("tokens")
+        data.pop("password")
+        return data
 
     async def create(self) -> "User":
         return await self._client.create_user(self)
@@ -57,7 +45,7 @@ class User(JsonModel):
         else:
             raise ValueError("Missing password attribute, required to change password.")
 
-    async def favorites(self) -> t.Optional[t.List[Recipe]]:
+    async def favorites(self) -> list[Recipe] | None:
         return await self._client.get_favorites(self.id)
 
     async def add_favorite(self, recipe_slug: str) -> None:
@@ -73,21 +61,25 @@ class User(JsonModel):
         return await self._client.update_user_image(self.id, image)
 
 
-@dataclass()
-class Group(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class Group(InteractiveModel):
     name: str
-    id: t.Union[int, None] = None
-    categories: t.Union[t.List[RecipeCategory], None] = None
-    webhook_urls: t.Union[t.List[str], None] = None
-    webhook_time: t.Union[timedelta, None] = None
-    users: t.Union[t.List[User], None] = None
-    mealplans: t.Union[t.List[MealPlan], None] = None
-    shopping_lists: t.Union[t.List[ShoppingList], None] = None
-    webhook_enable: t.Union[bool, None] = None
+    id: int | None = None
+    categories: list[RecipeCategory] | None = None
+    webhook_urls: list[str] | None = None
+    webhook_time: timedelta | None = None
+    users: list[User] | None = None
+    mealplans: list[MealPlan] | None = None
+    shopping_lists: list[ShoppingList] | None = None
+    webhook_enable: bool | None = None
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"name", "webhook_urls", "webhook_enable"})
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:  # type: ignore[override]
+        data = super().dict(*args, **kwargs)
+        data.pop("id")
+        data.pop("categories")
+        data.pop("users")
+        data.pop("mealplans")
+        data.pop("shopping_lists")
+        return data
 
     async def create(self) -> "Group":
         return await self._client.create_group(self)
@@ -95,8 +87,7 @@ class Group(JsonModel):
     async def update(self) -> "Group":
         if self.id is not None:
             return await self._client.update_group(self.id, self)
-        else:
-            raise ValueError("Missing required parameter id")
+        raise ValueError("Missing required parameter id")
 
     async def delete(self) -> None:
         if self.id is not None:
@@ -105,15 +96,15 @@ class Group(JsonModel):
             raise ValueError("Missing required parameter id")
 
 
-@dataclass()
-class UserSignup(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class UserSignup(InteractiveModel):
     name: str
     admin: bool
-    token: t.Union[str, None] = None
+    token: str | None = None
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"name", "admin"})
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:  # type: ignore[override]
+        data = super().dict(*args, **kwargs)
+        data.pop("token")
+        return data
 
     async def delete(self) -> None:
         await self._client.delete_signup_token(self.token)
@@ -121,5 +112,4 @@ class UserSignup(JsonModel):
     async def signup(self, user: User) -> User:
         if self.token:
             return await self._client.signup_with_token(self.token, user)
-        else:
-            raise ValueError("Tried to signup user without signup token")
+        raise ValueError("Tried to signup user without signup token")

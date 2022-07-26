@@ -1,6 +1,23 @@
 [tool.isort]
 profile = "black"
 
+[tool.mypy]
+disable_error_code = ["import", "attr-defined"]
+
+[tool.pylint.message_control]
+disable = [
+    "import-error",
+    "missing-class-docstring",
+    "missing-module-docstring",
+    "missing-function-docstring",
+    "too-few-public-methods",
+    "too-many-public-methods",
+    "too-many-arguments",
+    "redefined-builtin",
+    "invalid-name",
+    "line-too-long"
+]
+
 [tool.poetry]
 name = "MealieAPI"
 version = "0.0.0"
@@ -20,6 +37,8 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.7"
 aiohttp = "^3.8.1"
+pydantic = "^1.9.1"
+python-slugify = "^6.1.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"

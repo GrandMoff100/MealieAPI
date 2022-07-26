@@ -1,89 +1,81 @@
+from __future__ import annotations
+
 import typing as t
-from dataclasses import dataclass, field
 from datetime import datetime
 
+import slugify
+
 from mealieapi.const import YEAR_MONTH_DAY
-from mealieapi.misc import name_to_slug
-from mealieapi.mixins import JsonModel
-
-if t.TYPE_CHECKING:
-    from mealieapi.client import MealieClient
+from mealieapi.model import InteractiveModel
 
 
-@dataclass()
-class Meal(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class Meal(InteractiveModel):
     name: str
     description: str
 
     @property
-    def slug(self):
-        return name_to_slug(self.name)
+    def slug(self) -> str:
+        return slugify.slugify(self.name)
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"name", "slug", "description"})
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:
+        data = super().dict(*args, **kwargs)
+        data.update(slug=self.slug)
+        return data
 
     async def get_recipe(self):
         pass
 
 
-@dataclass()
-class MealPlanDay(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class MealPlanDay(InteractiveModel):
     date: datetime
-    meals: t.List[Meal]
+    meals: list[Meal]
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        data = super().json({"date", "meals"})
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:  # type: ignore[override]
+        data = super().dict(*args, **kwargs)
         data["date"] = data["date"].strftime(YEAR_MONTH_DAY)
         return data
 
 
-@dataclass()
-class MealPlan(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class MealPlan(InteractiveModel):
     group: str
     end_date: datetime
     start_date: datetime
-    meals: t.List[Meal]
-    id: t.Union[int, None] = None
-    shopping_list: t.Union[int, None] = None
+    meals: list[Meal]
+    id: int | None = None
+    shopping_list: int | None = None
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        data = super().json({"group", "end_date", "start_date", "meals"})
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:  # type: ignore[override]
+        data = super().dict(*args, **kwargs)
+        data.pop("id")
+        data.pop("shopping_list")
         data["end_date"] = data["end_date"].strftime(YEAR_MONTH_DAY)
         data["start_date"] = data["start_date"].strftime(YEAR_MONTH_DAY)
         return data
 
 
-@dataclass()
-class Ingredient(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class Ingredient(InteractiveModel):
     title: str
     text: str
     quantity: int
     checked: bool
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"title", "text", "quantity", "checked"})
 
-
-@dataclass()
-class ShoppingList(JsonModel):
-    _client: "MealieClient" = field(repr=False)
+class ShoppingList(InteractiveModel):
     name: str
     group: str
-    items: t.List[Ingredient]
-    id: t.Union[int, None] = None
+    items: list[Ingredient]
+    id: int | None = None
 
-    def json(self) -> t.Dict[str, t.Any]:  # type: ignore[override]
-        return super().json({"name", "groups", "items"})
+    def dict(self, *args, **kwargs) -> dict[str, t.Any]:  # type: ignore[override]
+        data = super().dict(*args, **kwargs)
+        data.pop("id")
+        return data
 
     async def toggle_checked(self, index: int) -> "ShoppingList":
         self.items[index].checked = not self.items[index].checked
         return await self.update()
 
-    def length(self):
+    def length(self) -> int:
         return len(self.items)
 
     async def create(self) -> "ShoppingList":
@@ -92,8 +84,7 @@ class ShoppingList(JsonModel):
     async def update(self) -> "ShoppingList":
         if self.id is not None:
             return await self._client.update_shopping_list(self.id, self)
-        else:
-            raise ValueError("Missing required attribute id")
+        raise ValueError("Missing required attribute id")
 
     async def delete(self) -> None:
         if self.id is not None:
