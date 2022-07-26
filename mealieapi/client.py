@@ -155,15 +155,15 @@ class MealieClient(RawClient):
         data = await self.request(
             "recipes/summary", params={"start": start, "limit": limit}
         )
-        return [Recipe(self, **data) for data in data]
+        return [Recipe(_client=self, **data) for data in data]
 
     async def get_untagged_recipes(self) -> list[Recipe]:
         data = await self.request("recipes/summary/untagged")
-        return [Recipe(self, **recipe) for recipe in data]
+        return [Recipe(_client=self, **recipe) for recipe in data]
 
     async def get_uncategorized_recipes(self) -> list[Recipe]:
         data = await self.request("recipes/summary/uncategorized")
-        return [Recipe(self, **recipe) for recipe in data]
+        return [Recipe(_client=self, **recipe) for recipe in data]
 
     # Recipe Methods
     def process_comment_json(self, data: dict[str, t.Any]) -> RecipeComment:
@@ -191,7 +191,7 @@ class MealieClient(RawClient):
                 data["date_updated"], YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
             )
         del data["slug"]
-        return Recipe(self, **data)
+        return Recipe(_client=self, **data)
 
     async def get_recipe(self, recipe_slug: str) -> Recipe:
         data = await self.request(f"recipes/{recipe_slug}")

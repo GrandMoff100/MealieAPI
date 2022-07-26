@@ -14,6 +14,8 @@ from mealieapi.errors import (
 )
 from mealieapi.misc import camel_to_snake_case
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class _RawClient:
     auth: Auth | None = None
@@ -64,11 +66,11 @@ class _RawClient:
         return register_processor
 
     async def process_response(self, response: aiohttp.ClientResponse) -> t.Any:
-        logging.debug("Status: %i", response.status)
-        logging.debug("URL: %s", response.url)
-        logging.debug("Method: %r", response.method)
-        logging.debug("Content: %r ", (await response.read())[:100] + b"...")
-        logging.debug(response.request_info)
+        _LOGGER.debug("Status: %i", response.status)
+        _LOGGER.debug("URL: %s", response.url)
+        _LOGGER.debug("Method: %r", response.method)
+        _LOGGER.debug("Content: %r ", (await response.read())[:100] + b"...")
+        _LOGGER.debug(response.request_info)
 
         if 200 <= response.status < 300:
 
@@ -129,7 +131,7 @@ class RawClient(_RawClient):
         data = await self.request(
             "auth/token",
             method="POST",
-            json={"username": username, "password": password},  # type: ignore[arg-type]
+            data={"username": username, "password": password},  # type: ignore[arg-type]
             use_auth=False,
         )
         return Auth(_client=self, **data)  # type: ignore[arg-type]

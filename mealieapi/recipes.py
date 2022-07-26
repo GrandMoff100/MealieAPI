@@ -1,5 +1,5 @@
 import typing as t
-from datetime import datetime
+from datetime import datetime, date
 from zipfile import ZipFile
 
 import slugify
@@ -41,7 +41,7 @@ class RecipeComment(InteractiveModel):
     text: str
     id: int
     uuid: str
-    date_added: datetime
+    date_added: date
     user: "User"
 
     def dict(self, *args, **kwargs) -> dict[str, t.Any]:  # type: ignore[override]
@@ -79,7 +79,7 @@ class Recipe(InteractiveModel):
     prep_time: str | None = None
     perform_time: str | None = None
     nutrition: RecipeNutrition | None = None
-    date_added: datetime | None = None
+    date_added: date | None = None
     date_updated: datetime | None = None
     org_url: str | None = None
     tools: list | None = None
