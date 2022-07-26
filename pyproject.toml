@@ -20,7 +20,7 @@ disable = [
 
 [tool.poetry]
 name = "MealieAPI"
-version = "0.0.1.pre0"
+version = "0.0.1b0"
 description = "Control your Mealie instance with python!"
 authors = ["GrandMoff100 <nlarsen23.student@gmail.com>"]
 maintainers = ["GrandMoff100 <nlarsen23.student@gmail.com>"]
