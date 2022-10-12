@@ -23,6 +23,12 @@ from mealieapi.users import Group, User, UserSignup
 
 
 class MealieClient(RawClient):
+    # App About
+    async def get_app_info(self) -> DebugVersion:
+        data = await self.request("app/about", use_auth=False)
+        return DebugVersion(**data)  # type: ignore[arg-type]
+    # endregion
+
     # User API Keys
     def process_token_json(self, data: dict[str, t.Any]) -> Token:
         return Token(self, **data)
