@@ -38,7 +38,7 @@ packages = [
 python = "^3.7"
 aiohttp = "^3.8.1"
 pydantic = "^1.9.1"
-python-slugify = "^6.1.2"
+python-slugify = "4.0.1"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"
