@@ -1,5 +1,5 @@
 import typing as t
-from datetime import datetime, date
+from datetime import date, datetime
 from zipfile import ZipFile
 
 import slugify

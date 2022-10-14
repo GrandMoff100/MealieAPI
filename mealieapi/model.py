@@ -1,5 +1,6 @@
-import typing as t
 import logging
+import typing as t
+
 from pydantic import BaseModel as BM
 from pydantic.error_wrappers import ValidationError
 
