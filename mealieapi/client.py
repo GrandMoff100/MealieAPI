@@ -24,7 +24,7 @@ from mealieapi.users import Group, User, UserSignup
 
 class MealieClient(RawClient):
     # App About
-    async def get_app_info(self) -> DebugVersion:
+    async def get_app_info(self) -> AppVersion:
         data = await self.request("app/about", use_auth=False)
         return AppVersion(**data)
 
