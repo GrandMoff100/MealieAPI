@@ -8,7 +8,7 @@ from mealieapi.auth import Token
 from mealieapi.backup import Backup
 from mealieapi.const import YEAR_MONTH_DAY, YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
 from mealieapi.meals import Ingredient, Meal, MealPlan, MealPlanDay, ShoppingList
-from mealieapi.misc import DebugInfo, DebugStatistics, DebugVersion, File
+from mealieapi.misc import AppVersion, DebugInfo, DebugStatistics, DebugVersion, File
 from mealieapi.raw import RawClient
 from mealieapi.recipes import (
     Recipe,
@@ -23,6 +23,11 @@ from mealieapi.users import Group, User, UserSignup
 
 
 class MealieClient(RawClient):
+    # App About
+    async def get_app_info(self) -> AppVersion:
+        data = await self.request("app/about", use_auth=False)
+        return AppVersion(**data)
+
     # User API Keys
     def process_token_json(self, data: dict[str, t.Any]) -> Token:
         return Token(self, **data)

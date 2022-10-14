@@ -26,6 +26,13 @@ class File(InteractiveModel):
         return await self._client.download_file(self.file_token)
 
 
+class AppVersion(BaseModel):
+    production: bool | None = None
+    version: str | None = None
+    demo_status: bool | None = None
+    allow_signup: bool | None = None
+
+
 class DebugInfo(BaseModel):
     production: bool | None = None
     version: str | None = None
