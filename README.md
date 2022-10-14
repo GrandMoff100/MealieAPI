@@ -7,6 +7,9 @@ All with MealieAPI.
 
 ## Installation
 
+```bash
+$ pip install mealieapi
+```
 
 ## Usage
 
@@ -37,4 +40,10 @@ loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
 ```
 
+## Docs
 
+A work in progress.
+
+## Contributions
+
+All contributions are welcome! Thats what makes Open-Source so special.
