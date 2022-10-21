@@ -16,7 +16,7 @@ class User(InteractiveModel):
     email: str
     admin: bool
     group: str
-    id: int
+    id: str
     favorite_recipes: list[Recipe] | None = None
     tokens: list[Token] | None = None
     password: str | None = None
