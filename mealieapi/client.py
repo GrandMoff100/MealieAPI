@@ -1,11 +1,10 @@
 import io
-import logging
 import posixpath
 import typing as t
 from datetime import datetime
 from zipfile import ZipFile
 
-from mealieapi.auth import Token
+from mealieapi.auth import
 from mealieapi.backup import Backup
 from mealieapi.const import YEAR_MONTH_DAY, YEAR_MONTH_DAY_HOUR_MINUTE_SECOND
 from mealieapi.meals import Ingredient, Meal, MealPlan, MealPlanDay, ShoppingList
@@ -20,7 +19,7 @@ from mealieapi.recipes import (
     RecipeNutrition,
     RecipeTag,
 )
-from mealieapi.users import Group, User, UserSignup
+from mealieapi.users import Group, User, UserSignupToken
 
 
 class MealieClient(RawClient):
