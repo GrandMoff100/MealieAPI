@@ -30,7 +30,7 @@ class MealieClient(RawClient):
 
     # User API Keys
     def process_token_json(self, data: dict[str, t.Any]) -> Token:
-        return Token(self, **data)
+        return Token(_client=self, **data)
 
     async def create_api_key(self, name: str) -> Token:
         data = await self.request(
@@ -56,13 +56,13 @@ class MealieClient(RawClient):
 
     async def get_open_signups(self) -> list[UserSignup]:
         data = await self.request("users/sign-ups")
-        return [UserSignup(self, **signup) for signup in data]
+        return [UserSignup(_client=self, **signup) for signup in data]
 
     async def create_signup_token(self, name: str, admin: bool = False) -> UserSignup:
         data = await self.request(
             "users/sign-ups", method="POST", json=dict(name=name, admin=admin)
         )
-        return UserSignup(self, **data)
+        return UserSignup(_client=self, **data)
 
     # Users
     def process_user_json(self, data: dict[str, t.Any]) -> User:
@@ -74,7 +74,7 @@ class MealieClient(RawClient):
             data["tokens"] = [
                 self.process_token_json(token_data) for token_data in data["tokens"]
             ]
-        return User(self, **data)
+        return User(_client=self, **data)
 
     async def get_user_image(self, user_id: int) -> bytes:
         return await self.request(f"users/{user_id}/image", use_auth=False)
@@ -129,7 +129,7 @@ class MealieClient(RawClient):
     # Groups
     def process_group_json(self, data: dict[str, t.Any]) -> Group:
         data["users"] = [self.process_user_json(info) for info in data["users"]]
-        return Group(self, **data)
+        return Group(_client=self, **data)
 
     async def get_groups(self) -> list[Group]:
         data = await self.request("groups")
