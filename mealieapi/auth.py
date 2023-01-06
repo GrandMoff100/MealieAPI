@@ -101,7 +101,6 @@ class BasicAuth(Auth):
     async def _headers(self) -> dict[str, str]:
         if self._access_token is None:
             data = await self.get_token(self._username, self._password)
-            print(data)
             self._access_token = data.get("access_token")
             self._token_type = data.get("token_type")
         return await super()._headers()
