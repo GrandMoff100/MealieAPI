@@ -48,6 +48,7 @@ class Auth(ClientSession):
             params=params,
             **kwargs,
         )
+        # TODO: Add mimetype hooks and json model processing
         if response.content_type == "application/json":
             return await response.json()
         if response.content_type == "text/html":
