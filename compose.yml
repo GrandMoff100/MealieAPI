@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  # mealie-api-tests:
+  #   build: .
+  mealie-frontend:
+    image: hkotel/mealie:frontend-v1.0.0beta-5
+    container_name: mealie-frontend
+    environment:
+      - API_URL=http://mealie-api:9000
+    ports:
+      - 9925:3000
+    restart: always
+    volumes:
+      - mealie-data:/app/data/
+  mealie-api:
+    image: hkotel/mealie:api-v1.0.0beta-5
+    container_name: mealie-api
+    deploy:
+      resources:
+        limits:
+          memory: 1000M
+    volumes:
+      - mealie-data:/app/data/
+    environment:
+    # Set Backend ENV Variables Here
+      - ALLOW_SIGNUP=true
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+      - MAX_WORKERS=1
+      - WEB_CONCURRENCY=1
+      - BASE_URL=http://localhost:9925/
+    restart: always
+
+volumes:
+  mealie-data:
+    driver: local
