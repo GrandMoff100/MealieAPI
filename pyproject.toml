@@ -18,6 +18,7 @@ include = ["mealieapi/py.typed"]
 [tool.poetry.dependencies]
 python = "^3.7"
 aiohttp = {extras = ["speedups"], version = "^3.8.3"}
+pydantic = "^1.10.4"
 
 [tool.poetry.group.testing]
 optional = true
@@ -25,6 +26,7 @@ optional = true
 [tool.poetry.group.testing.dependencies]
 mypy = "^0.920"
 pytest = "^6.2.5"
+pytest-asyncio = "^0.20.3"
 
 [tool.ruff]
 exclude = [
@@ -46,6 +48,8 @@ select = [
 [tool.mypy]
 disable_error_code = ["import", "attr-defined"]
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
