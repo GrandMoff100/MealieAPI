@@ -1,20 +1,22 @@
 version: "3.9"
 
 services:
-  # mealie-api-tests:
-  #   build: .
-  mealie-frontend:
-    image: hkotel/mealie:frontend-v1.0.0beta-5
-    container_name: mealie-frontend
-    environment:
-      - API_URL=http://mealie-api:9000
-    ports:
-      - 9925:3000
-    restart: always
+  tests:
+    build:
+      context: .
+      args:
+        BASE_IMAGE: "python:3.9"
+    image: mealieapi-tests:latest
     volumes:
-      - mealie-data:/app/data/
+      - ./volumes/coverage:/app/coverage:rw
+    depends_on:
+      - mealie-api
+    environment:
+      MEALIE_URL: http://mealie-api:9000
+      MEALIE_TOKEN: ${MEALIE_TEST_SUITE_TOKEN}
+    restart: unless-stopped
   mealie-api:
-    image: hkotel/mealie:api-v1.0.0beta-5
+    image: hkotel/mealie:api-v1.0.0beta-5  # <-- Be diligent about updating this!!
     container_name: mealie-api
     deploy:
       resources:
@@ -30,8 +32,11 @@ services:
       - TZ=America/Chicago
       - MAX_WORKERS=1
       - WEB_CONCURRENCY=1
-      - BASE_URL=http://localhost:9925/
-    restart: always
+      - API_PORT=9000
+      - DEFAULT_GROUP="Testers"
+      - DEFAULT_EMAIL="tester@email.com"
+      - DEFAULT_PASSWORD="agloriouspasswordfortesting"
+    restart: unless-stopped
 
 volumes:
   mealie-data:
