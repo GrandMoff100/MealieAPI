@@ -1,11 +1,10 @@
-import json
 from posixpath import join as urljoin
 from typing import Any, cast
 
 from aiohttp import ClientSession
 
 
-class Auth(ClientSession):
+class Auth:
     REFRESH_AFTER: int = 60 * 60 * 12
 
     def __init__(
@@ -13,13 +12,20 @@ class Auth(ClientSession):
         url: str,
         access_token: str | None = None,
         token_type: str | None = None,
-        *args: Any,
-        **kwargs: Any,
     ) -> None:
         self._api = url
         self._access_token: str | None = access_token
         self._token_type: str | None = token_type
-        super().__init__(*args, **kwargs, headers=self.session_headers)
+        self._session = ClientSession(headers=self.session_headers)
+
+    async def __aenter__(self) -> "Auth":
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        await self.close()
+
+    async def close(self) -> None:
+        await self._session.close()
 
     async def _headers(self) -> dict[str, str]:
         print(self._access_token)
@@ -40,8 +46,7 @@ class Auth(ClientSession):
     ) -> dict[str, Any] | bytes:
         """Make a request to the API with proper authentication."""
         _headers = {} if not use_auth else await self._headers()
-        response = await ClientSession.request(
-            self,
+        response = await self._session.request(
             method,
             urljoin(self._api, endpoint),
             headers=_headers | (headers or {}),
@@ -52,7 +57,9 @@ class Auth(ClientSession):
         if response.content_type == "application/json":
             return await response.json()
         if response.content_type == "text/html":
-            raise UserWarning("Did you request the wrong endpoint? The response was HTML.")
+            raise UserWarning(
+                "Did you request the wrong endpoint? The response was HTML."
+            )
         if response.content_type.startswith("text/"):
             return await response.text()
         return await response.content.read()
@@ -82,6 +89,14 @@ class Auth(ClientSession):
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             use_auth=False,
+        )
+        return cast(dict[str, str], data)
+
+    async def refresh_token(self) -> dict[str, str]:
+        """Refresh the session token."""
+        data = await self.request(
+            method="GET",
+            endpoint="api/auth/refresh",
         )
         return cast(dict[str, str], data)
 

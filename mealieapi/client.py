@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from .auth import AccessTokenAuth, Auth, BasicAuth
 
+from .models import AppInfo
+
 from urllib.parse import urlparse
 
 
@@ -35,3 +37,7 @@ class Client(BasicAuth, AccessTokenAuth):
             BasicAuth.__init__(self, scrub_url(url), username, password)
         else:
             Auth.__init__(self, scrub_url(url))
+
+    async def about(self) -> AppInfo:
+        data = await self.request("GET", "api/app/about", use_auth=False)
+        return AppInfo.parse_obj(data)
