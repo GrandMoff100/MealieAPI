@@ -27,6 +27,8 @@ optional = true
 mypy = "^0.920"
 pytest = "^6.2.5"
 pytest-asyncio = "^0.20.3"
+pytest-cov = "^4.0.0"
+ruff = "^0.0.212"
 
 [tool.ruff]
 exclude = [
