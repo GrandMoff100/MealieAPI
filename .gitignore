@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Ruff
+.ruff_cache/
+
 # Pycharm
 .idea/
 venv/
