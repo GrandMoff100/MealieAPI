@@ -15,28 +15,26 @@ services:
       MEALIE_URL: http://mealie-api:9000
       MEALIE_TOKEN: ${MEALIE_TEST_SUITE_TOKEN}
     restart: unless-stopped
-  mealie-api:
-    image: hkotel/mealie:api-v1.0.0beta-5  # <-- Be diligent about updating this!!
-    container_name: mealie-api
-    deploy:
-      resources:
-        limits:
-          memory: 1000M
+  mealie-frontend:
+    image: hkotel/mealie:frontend-v1.0.0beta-5
+    container_name: mealie-frontend
+    environment:
+      - API_URL=http://mealie-api:9000
+    restart: always
+    ports:
+      - "9925:3000"
     volumes:
       - mealie-data:/app/data/
-    environment:
-    # Set Backend ENV Variables Here
-      - ALLOW_SIGNUP=true
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/Chicago
-      - MAX_WORKERS=1
-      - WEB_CONCURRENCY=1
+  mealie-api:
+    image: hkotel/mealie:api-v1.0.0beta-5
       - API_PORT=9000
       - DEFAULT_GROUP="Testers"
       - DEFAULT_EMAIL="tester@email.com"
       - DEFAULT_PASSWORD="agloriouspasswordfortesting"
     restart: unless-stopped
+      - DEFAULT_EMAIL=tester101@email.com
+      - DEFAULT_GROUP=mealieapi
+    restart: always
 
 volumes:
   mealie-data:
